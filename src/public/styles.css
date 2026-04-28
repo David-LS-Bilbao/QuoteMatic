@@ -1,0 +1,56 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #101827;
+  color: #f8fafc;
+}
+
+.landing {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+}
+
+.card {
+  max-width: 640px;
+  padding: 2rem;
+  border-radius: 16px;
+  background: #172033;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  color: #93c5fd;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(2.5rem, 8vw, 5rem);
+}
+
+p {
+  line-height: 1.6;
+}
+
+.actions {
+  margin-top: 1.5rem;
+}
+
+a {
+  display: inline-block;
+  color: #101827;
+  background: #f8fafc;
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+}
