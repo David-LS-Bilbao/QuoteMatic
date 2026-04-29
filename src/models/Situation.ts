@@ -38,6 +38,6 @@ const situationSchema = new Schema<ISituation>(
 );  
 
 export const Situation = mongoose.model<ISituation>(
-    "Situations",
+    "Situation",
      situationSchema
     );   
