@@ -1,0 +1,46 @@
+{
+  "name": "quotematic",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/server.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsx watch src/server.ts",
+    "build": "npm run clean && tsc && npm run copy:assets",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "copy:views": "cpx \"src/views/**/*\" dist/views",
+    "copy:public": "cpx \"src/public/**/*\" dist/public",
+    "copy:assets": "npm run copy:views && npm run copy:public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/David-LS-Bilbao/QuoteMatic.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/David-LS-Bilbao/QuoteMatic/issues"
+  },
+  "homepage": "https://github.com/David-LS-Bilbao/QuoteMatic#readme",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "ejs": "^5.0.2",
+    "express": "^5.2.1",
+    "mongoose": "^9.5.0"
+  },
+  "devDependencies": {
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.6.0",
+    "cpx": "^1.5.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}
