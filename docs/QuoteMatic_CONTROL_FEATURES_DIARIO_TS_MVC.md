@@ -16,7 +16,7 @@ Sirve para registrar features, avances, complicaciones, decisiones técnicas, pr
 | Arquitectura | MVC pragmática con services simples |
 | Rama estable | `main` |
 | Rama integración | `dev` |
-| Estado | Planificación actualizada |
+| Estado | Sprint 01 completado; Sprint 02 pendiente |
 
 ---
 
@@ -24,9 +24,9 @@ Sirve para registrar features, avances, complicaciones, decisiones técnicas, pr
 
 | Área | Estado | Notas |
 |---|---|---|
-| Setup TypeScript | Pendiente | `tsconfig`, scripts, estructura |
-| Express + EJS | Pendiente | App base y layout |
-| MongoDB/Mongoose | Pendiente | Conexión tipada |
+| Setup TypeScript | Finalizado | `tsconfig`, scripts, estructura base |
+| Express + EJS | Finalizado | App base, landing y assets |
+| MongoDB/Mongoose | Finalizado | Conexión preparada con `MONGODB_URI` |
 | Auth | Pendiente | Registro, login, logout |
 | Sesiones | Pendiente | `express-session` + `connect-mongo` |
 | Roles | Pendiente | `user` y `admin` |
@@ -38,7 +38,7 @@ Sirve para registrar features, avances, complicaciones, decisiones técnicas, pr
 | Favoritos | Pendiente | Guardar y eliminar |
 | Admin CRUD | Pendiente | Autores, frases, situaciones, tipos |
 | ImportCandidate | Bonus | Flujo admin con APIs externas |
-| Documentación | En progreso | README e informe actualizados |
+| Documentación | En progreso | README principal y docs Sprint 01 actualizados |
 
 Estados sugeridos: `Pendiente`, `En progreso`, `Bloqueado`, `En revisión`, `Finalizado`, `Descartado`.
 
@@ -48,10 +48,10 @@ Estados sugeridos: `Pendiente`, `En progreso`, `Bloqueado`, `En revisión`, `Fin
 
 | ID | Feature | Prioridad | Rama sugerida | Estado | Notas |
 |---|---|---:|---|---|---|
-| F01 | Setup TypeScript + Express | Alta | `feat/typescript-project-setup` | Pendiente | Base técnica |
-| F02 | Configurar EJS y assets | Alta | `feat/typescript-project-setup` | Pendiente | Layout + public/css |
-| F03 | Conexión MongoDB | Alta | `feat/typescript-project-setup` | Pendiente | Mongoose + `.env` |
-| F04 | Health route | Alta | `feat/typescript-project-setup` | Pendiente | `/health` |
+| F01 | Setup TypeScript + Express | Alta | `feat/typescript-project-setup` | Finalizado | Base técnica completada |
+| F02 | Configurar EJS y assets | Alta | `feat/typescript-project-setup` | Finalizado | Landing, view engine y assets publicos |
+| F03 | Conexión MongoDB | Alta | `feat/typescript-project-setup` | Finalizado | Mongoose + `.env.example` + Docker MongoDB |
+| F04 | Health route | Alta | `feat/typescript-project-setup` | Finalizado | `GET /health` |
 | F05 | Tipos de dominio | Alta | `feat/models-seed` | Pendiente | UserRole, AgeGroup, etc. |
 | F06 | Modelos Mongoose | Alta | `feat/models-seed` | Pendiente | User, Quote, Author... |
 | F07 | Seed inicial | Alta | `feat/models-seed` | Pendiente | Admin + frases |
@@ -71,7 +71,7 @@ Estados sugeridos: `Pendiente`, `En progreso`, `Bloqueado`, `En revisión`, `Fin
 | F21 | CSS demo | Media | `feat/minifront-ui` | Pendiente | gradiente + animación |
 | F22 | ImportCandidate | Bonus | `feat/import-candidates` | Pendiente | staging |
 | F23 | Búsqueda API admin | Bonus | `feat/import-candidates` | Pendiente | no runtime usuario |
-| F24 | README + memoria | Alta | `docs/readme-memoria` | En progreso | actualizar durante el proyecto |
+| F24 | README + memoria | Alta | `docs/readme-memoria` | En progreso | README principal e informes Sprint 01 creados |
 | F25 | Integración final | Alta | `test/final-integration` | Pendiente | pruebas end-to-end manuales |
 
 ---
@@ -142,58 +142,106 @@ src/...
 
 | ID | Fecha | Decisión | Motivo | Alternativas | Impacto |
 |---|---|---|---|---|---|
-| D01 | YYYY-MM-DD | Usar TypeScript | Mejor aprendizaje y portfolio | JS puro | Más configuración, más robustez |
-| D02 | YYYY-MM-DD | Usar MVC pragmático | Separación clara | Código todo en rutas | Más mantenible |
-| D03 | YYYY-MM-DD | Usar EJS como minifront | Demo visual sin React | API-only | Más defendible en clase |
-| D04 | YYYY-MM-DD | Usar sessions | Mejor con vistas EJS | JWT | Más simple para MVP |
-| D05 | YYYY-MM-DD | MongoDB manda | Evitar dependencia externa | API runtime | Demo estable |
-| D06 | YYYY-MM-DD | Services simples | Encapsular lógica | Controllers gigantes | Mejor transición a proyectos pro |
+| D01 | 2026-04-29 | Usar TypeScript | Mejor aprendizaje y portfolio | JS puro | Más configuración, más robustez |
+| D02 | 2026-04-29 | Usar MVC pragmático | Separación clara | Código todo en rutas | Más mantenible |
+| D03 | 2026-04-29 | Usar EJS como minifront | Demo visual sin React | API-only | Más defendible en clase |
+| D04 | Pendiente | Usar sessions | Mejor con vistas EJS | JWT | Se decidirá en sprint de auth |
+| D05 | 2026-04-29 | MongoDB manda | Evitar dependencia externa | API runtime | Demo estable |
+| D06 | Pendiente | Services simples | Encapsular lógica | Controllers gigantes | Se aplicará cuando exista lógica de negocio |
 
 ---
 
 ## 6. Diario de desarrollo
 
-### Día 01 - YYYY-MM-DD
+### Día 01 - 2026-04-29
 
 #### Objetivo
 
-- 
+- Completar el setup técnico base del Sprint 01.
+- Dejar una app Express + TypeScript + EJS preparada para crecer en siguientes sprints.
 
 #### Trabajo realizado
 
-- 
+- Inicialización de proyecto Node.js.
+- Configuración TypeScript.
+- Configuración Express separando `app.ts` y `server.ts`.
+- Configuración EJS y landing inicial en `GET /`.
+- Endpoint `GET /health`.
+- Configuración MongoDB con Mongoose.
+- Docker Compose para MongoDB local.
+- Scripts npm para desarrollo, typecheck, build, start, clean y copia de assets.
+- Documentación Sprint 01 y README principal.
 
 #### Archivos tocados
 
 ```txt
-
+README.md
+package.json
+package-lock.json
+tsconfig.json
+docker-compose.yml
+.env.example
+.gitignore
+src/app.ts
+src/server.ts
+src/config/database.ts
+src/controllers/home.controller.ts
+src/controllers/health.controller.ts
+src/routes/index.routes.ts
+src/routes/health.routes.ts
+src/views/index.ejs
+src/public/styles.css
+docs/sprints/SPRINT_01_SETUP_REPORT.md
+docs/sprints/SPRINT_01_QA_CHECKLIST.md
+docs/sprints/SPRINT_01_NEXT_STEPS.md
 ```
 
 #### Problemas
 
-- 
+- `tsconfig` inicial generado con configuración poco adecuada para backend.
+- `moduleResolution Node` deprecado en TypeScript 6.
+- Diferencia de nombres entre imports y archivos de rutas.
+- `.env` creado accidentalmente dentro de `src`.
+- `node_modules` subido accidentalmente durante el proceso.
+- Necesidad de copiar `views` y `public` al build.
 
 #### Soluciones
 
-- 
+- Ajuste de TypeScript a `Node16`.
+- Corrección de imports.
+- Limpieza de archivos locales no versionables.
+- Refuerzo de `.gitignore`.
+- Scripts `copy:views`, `copy:public` y `copy:assets`.
 
 #### Pruebas
 
-- 
+- `npm run typecheck` correcto.
+- `npm run build` correcto.
+- Verificación de rutas `GET /` y `GET /health`.
+- Verificación documental del Sprint 01.
 
 #### Commits
 
 ```txt
-
+ce2d43f chore(project): initialize node project
+01ea593 chore(ts): configure typescript
+e9cad47 feat(app): add express app with ejs
+1565d5e feat(config): add mongodb connection setup
+b9f4da9 chore(build): copy ejs and public assets
+17424d7 chore(db): add mongodb docker compose
+767419c docs(sprint): add sprint 01 documentation
 ```
 
 #### Pendiente próximo día
 
-- 
+- Iniciar Sprint 02 con tipos de dominio, modelos Mongoose y seed inicial.
+- No mezclar todavía auth, CRUD completo ni lógica de recomendación.
 
 #### Aprendizaje
 
-- 
+- En proyectos TypeScript backend conviene ajustar el `tsconfig` al entorno Node desde el principio.
+- Si se usan EJS y assets estáticos, el build debe copiar archivos no TypeScript a `dist`.
+- La documentación por sprint ayuda a separar estado real de roadmap futuro.
 
 ---
 
