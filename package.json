@@ -15,7 +15,8 @@
     "clean": "rm -rf dist",
     "copy:views": "cpx \"src/views/**/*\" dist/views",
     "copy:public": "cpx \"src/public/**/*\" dist/public",
-    "copy:assets": "npm run copy:views && npm run copy:public"
+    "copy:assets": "npm run copy:views && npm run copy:public",
+    "seed": "tsx src/seeds/seed.ts"
   },
   "repository": {
     "type": "git",
