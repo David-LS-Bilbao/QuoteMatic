@@ -6,6 +6,18 @@ Estado actual: **Sprint 02 implementado en la rama `feat/domain-models-and-seed`
 
 Sprint 02 anade la primera capa de dominio del proyecto: tipos TypeScript, modelos Mongoose principales, relaciones entre colecciones y un seed inicial pequeno y repetible.
 
+## Enfoque Actual del MVP
+
+QuoteMatic se mantiene como un proyecto backend pequeno y centrado en demostrar dominio practico de MongoDB, Mongoose, seed y endpoints REST.
+
+Prioridad tecnica:
+
+```text
+MongoDB + Mongoose + Seed + API REST simple + CRUD minimo
+```
+
+Las vistas EJS seran minimas y funcionaran solo como apoyo visual para demo. El objetivo principal es que el profesor pueda clonar el proyecto, levantar MongoDB, ejecutar el seed y probar endpoints REST sobre datos reales.
+
 ## Stack
 
 - Node.js
@@ -232,14 +244,17 @@ QuoteMatic/
 
 ## Roadmap
 
-- Sprint 03: autenticacion, sesiones, roles y age gate.
-- Sprint 04: dashboard inicial y recomendacion de frases.
-- Sprint 05: CRUD admin para gestionar contenido.
+- Sprint 01: setup tecnico base. Completado.
+- Sprint 02: modelos de dominio y seed inicial. Completado.
+- Sprint 03: API REST publica de consulta y CRUD basico de `Quote`.
+- Sprint 04: autenticacion, sesiones, roles y age gate.
+- Sprint 05: vistas minimas, favoritos y polish.
 
 ## Nota de Alcance
 
 QuoteMatic todavia no implementa:
 
+- API REST completa de frases.
 - Login.
 - Register.
 - Logout.
@@ -248,5 +263,6 @@ QuoteMatic todavia no implementa:
 - APIs externas.
 - Dashboard avanzado.
 - Recomendacion completa de frases.
+- Paginacion o filtros avanzados.
 
 Estas funcionalidades quedan planificadas para los siguientes sprints.

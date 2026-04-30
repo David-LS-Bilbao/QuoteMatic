@@ -2,126 +2,101 @@
 
 Fecha: 2026-04-30  
 Proyecto: QuoteMatic  
-Siguiente sprint recomendado: Sprint 03 - Auth, sesiones, roles y age gate
+Siguiente sprint recomendado: Sprint 03 - API REST publica de consulta + CRUD basico de Quote
 
 ## Objetivo del Sprint 03
 
-Implementar la base de autenticacion de QuoteMatic para permitir registro, inicio y cierre de sesion, persistencia de sesiones en MongoDB, control de roles y validacion de edad antes de crear usuarios o permitir acceso a funcionalidades sensibles.
+Implementar una API REST simple para consultar los datos cargados por el seed y realizar CRUD basico sobre `Quote`.
 
-El objetivo no es construir todo el panel de administracion ni todos los flujos sociales, sino dejar una base segura y comprobable para los siguientes sprints.
+El objetivo principal es que el profesor pueda clonar el proyecto, levantar MongoDB, ejecutar el seed y probar endpoints REST contra datos reales. Sprint 03 debe demostrar el uso practico de Express, MongoDB, Mongoose, relaciones entre colecciones y operaciones CRUD sin introducir autenticacion ni paneles complejos.
 
-## Features Sugeridas
+## Endpoints Previstos
 
-- `register`
-- `login`
-- `logout`
-- `express-session`
-- `connect-mongo`
-- `bcrypt`
-- Middleware `isAuthenticated`
-- Middleware `isAdmin`
-- Age gate
-- Bloqueo de menores de 14
-- Guardar `ageGroup` en `User`
+Endpoints principales de frases:
 
-## Alcance Funcional Recomendado
+- `GET /api/quotes`
+- `GET /api/quotes/:id`
+- `GET /api/quotes/random`
+- `POST /api/quotes`
+- `PUT /api/quotes/:id`
+- `DELETE /api/quotes/:id`
 
-### Registro
+Endpoints auxiliares de consulta:
 
-- Crear formulario o endpoint de registro.
-- Validar nombre, email, password y edad declarada.
-- Rechazar usuarios menores de 14.
-- Calcular y guardar `ageGroup`.
-- Guardar password como `passwordHash`, nunca en texto plano.
+- `GET /api/authors`
+- `GET /api/situations`
+- `GET /api/quote-types`
 
-### Login
+El CRUD principal del MVP sera sobre `Quote`. Los endpoints auxiliares serviran para entender los datos relacionados y facilitar la creacion o prueba de frases.
 
-- Buscar usuario por email.
-- Validar password con `bcrypt`.
-- Crear sesion si las credenciales son correctas.
-- Rechazar usuarios inactivos.
+## Rama Sugerida
 
-### Logout
-
-- Destruir sesion activa.
-- Redirigir o responder con estado claro.
-
-### Sesiones
-
-- Configurar `express-session`.
-- Persistir sesiones con `connect-mongo`.
-- Usar una variable de entorno para el secreto de sesion.
-
-### Roles
-
-- Mantener `user` como rol por defecto.
-- Proteger rutas futuras de administracion con `isAdmin`.
-- Evitar crear panel admin completo dentro de este sprint.
-
-### Age Gate
-
-- Pedir edad o fecha de nacimiento antes del registro efectivo.
-- Bloquear menores de 14.
-- Asignar `teen_14_17` o `adult_18_plus`.
-- Usar `ageGroup` como base para filtrar contenido en sprints posteriores.
-
-## Ramas Sugeridas
-
-- Rama principal del sprint: `feat/auth-sessions-age-gate`
-- Alternativa por partes:
-  - `feat/auth-base`
-  - `feat/session-store`
-  - `feat/age-gate`
+```text
+feat/api-rest-quotes
+```
 
 ## Commits Sugeridos
 
 ```text
-feat(auth): add password hashing helpers
-feat(auth): add register flow
-feat(auth): add login and logout flow
-feat(session): persist sessions in mongo
-feat(auth): add authentication middleware
-feat(auth): add admin middleware
-feat(age-gate): block users under fourteen
-docs(sprint): add sprint 03 documentation
+docs(project): update mvp direction
+docs(sprint): update sprint 03 api roadmap
 ```
 
-## Riesgos
+Para la implementacion posterior del Sprint 03, se sugieren commits separados como:
 
-- Guardar passwords sin hash por error.
-- Configurar sesiones sin secreto robusto.
-- Dejar cookies inseguras para entorno productivo.
-- Mezclar age gate con recomendacion avanzada antes de tiempo.
-- Implementar CRUD admin completo y abrir demasiado el alcance.
-- No distinguir entre autenticacion y autorizacion.
-- No contemplar usuarios inactivos.
-- No documentar variables nuevas en `.env.example`.
+```text
+feat(api): add quote read endpoints
+feat(api): add quote create endpoint
+feat(api): add quote update endpoint
+feat(api): add quote delete endpoint
+feat(api): add catalog read endpoints
+docs(api): document sprint 03 endpoints
+```
 
-## Checklist de Salida
+## Fuera de Alcance
 
-- [ ] Existe registro de usuario.
-- [ ] Existe login.
-- [ ] Existe logout.
-- [ ] Password se guarda con `bcrypt`.
-- [ ] Sesion se persiste con `connect-mongo`.
-- [ ] Existe middleware `isAuthenticated`.
-- [ ] Existe middleware `isAdmin`.
-- [ ] Menores de 14 quedan bloqueados.
-- [ ] `ageGroup` se guarda en `User`.
-- [ ] Variables nuevas estan documentadas en `.env.example`.
-- [ ] `npm run typecheck` pasa.
-- [ ] `npm run build` pasa.
-- [ ] README queda actualizado con Sprint 03.
-
-## Fuera de Alcance Recomendado
-
-- CRUD admin completo.
+- Auth.
+- Sesiones.
+- Roles reales.
+- Login/register.
 - Favoritos funcionales.
 - APIs externas.
 - Dashboard avanzado.
-- Recomendacion compleja de frases.
-- Moderacion avanzada de contenido.
+- Panel admin complejo.
+- Paginacion.
+- Filtros avanzados.
+- `ImportCandidate`.
+- Staging de APIs externas.
+
+## Riesgos de Sobreingenieria
+
+- Intentar construir autenticacion antes de tener endpoints REST probables.
+- Crear un panel admin completo cuando basta con CRUD basico de `Quote`.
+- Anadir paginacion, filtros avanzados o busqueda compleja demasiado pronto.
+- Mezclar el Sprint 03 con favoritos o dashboard.
+- Introducir dependencias nuevas sin necesidad real.
+- Crear abstracciones genericas antes de validar el flujo basico con Mongoose.
+
+Regla de simplicidad: si una funcionalidad no ayuda a demostrar MongoDB, Mongoose, endpoints o CRUD, queda fuera del MVP.
+
+## Checklist de Salida
+
+- [ ] Existe `GET /api/quotes`.
+- [ ] Existe `GET /api/quotes/:id`.
+- [ ] Existe `GET /api/quotes/random`.
+- [ ] Existe `POST /api/quotes`.
+- [ ] Existe `PUT /api/quotes/:id`.
+- [ ] Existe `DELETE /api/quotes/:id`.
+- [ ] Existe `GET /api/authors`.
+- [ ] Existe `GET /api/situations`.
+- [ ] Existe `GET /api/quote-types`.
+- [ ] Las respuestas de `Quote` incluyen referencias utiles o pobladas cuando aporte claridad.
+- [ ] El CRUD valida ids y referencias basicas.
+- [ ] `npm run typecheck` pasa.
+- [ ] `npm run build` pasa.
+- [ ] `npm run seed` permite preparar datos de prueba.
+- [ ] README documenta endpoints y flujo de prueba.
 
 ## Resultado Esperado
 
-Al cerrar Sprint 03, QuoteMatic deberia tener una base de identidad y sesiones suficiente para proteger rutas futuras, distinguir usuarios normales de administradores y aplicar una primera restriccion por edad sin mezclar todavia la logica de recomendacion.
+Al cerrar Sprint 03, QuoteMatic debe poder demostrarse como backend REST pequeno: base MongoDB levantada, seed ejecutado y endpoints disponibles para consultar, crear, editar y desactivar o eliminar frases.
