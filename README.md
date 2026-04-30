@@ -2,9 +2,9 @@
 
 QuoteMatic es una aplicacion backend con minifront en EJS que recomendara frases segun la situacion del usuario, el tipo de frase y el rango de edad declarado.
 
-Estado actual: **Sprint 01 - Setup tecnico base completado**.
+Estado actual: **Sprint 02 implementado en la rama `feat/domain-models-and-seed`**.
 
-En este sprint se preparo la base del proyecto: Node.js, Express, TypeScript, EJS, arquitectura MVC inicial, endpoint de salud, configuracion de MongoDB con Mongoose y Docker Compose para MongoDB local.
+Sprint 02 anade la primera capa de dominio del proyecto: tipos TypeScript, modelos Mongoose principales, relaciones entre colecciones y un seed inicial pequeno y repetible.
 
 ## Stack
 
@@ -15,12 +15,13 @@ En este sprint se preparo la base del proyecto: Node.js, Express, TypeScript, EJ
 - Mongoose
 - EJS
 - Docker Compose para MongoDB local
+- `tsx` para ejecucion TypeScript en desarrollo y seed
 
 ## Requisitos
 
 - Node.js instalado.
 - npm instalado.
-- Docker y Docker Compose si se quiere levantar MongoDB local.
+- Docker y Docker Compose para levantar MongoDB local.
 - Git para trabajar con ramas y flujo de PR.
 
 ## Instalacion
@@ -29,7 +30,7 @@ En este sprint se preparo la base del proyecto: Node.js, Express, TypeScript, EJ
 npm install
 ```
 
-## Variables de entorno
+## Variables de Entorno
 
 El proyecto incluye `.env.example`:
 
@@ -49,7 +50,7 @@ docker ps
 
 El servicio usa MongoDB en `localhost:27017` y persiste datos en un volumen de Docker.
 
-## Ejecutar en desarrollo
+## Ejecutar en Desarrollo
 
 ```bash
 npm run dev
@@ -61,7 +62,7 @@ Por defecto la aplicacion escucha en:
 http://localhost:3000
 ```
 
-## Build y start
+## Build y Start
 
 Compilar TypeScript y copiar vistas/assets:
 
@@ -75,7 +76,51 @@ Ejecutar la version compilada:
 npm start
 ```
 
-## Rutas disponibles
+## Seed Inicial
+
+Ejecutar seed:
+
+```bash
+npm run seed
+```
+
+El seed:
+
+- Conecta usando `MONGODB_URI`.
+- Limpia colecciones antes de insertar datos.
+- Inserta 4 autores.
+- Inserta 4 situaciones.
+- Inserta 8 tipos de frase.
+- Inserta 12 frases.
+- Valida referencias internas antes de insertar frases.
+- No crea usuarios todavia.
+
+Autores iniciales:
+
+- Marco Aurelio
+- Seneca
+- Yoda
+- Homer Simpson
+
+Situaciones iniciales:
+
+- Trabajo
+- Estudios
+- Estres
+- Decisiones dificiles
+
+Tipos de frase iniciales:
+
+- Estoica
+- Filosofica
+- Motivacional
+- Divertida
+- Realista
+- Sarcastica
+- Consejo sabio
+- Excusa
+
+## Rutas Disponibles
 
 - `GET /` - landing inicial renderizada con EJS.
 - `GET /health` - endpoint de salud del servidor.
@@ -92,12 +137,55 @@ curl http://localhost:3000/health
 - `npm run typecheck` - valida TypeScript sin emitir archivos.
 - `npm run build` - limpia `dist`, compila TypeScript y copia vistas/assets.
 - `npm start` - ejecuta `dist/server.js`.
+- `npm run seed` - ejecuta el seed inicial con `tsx src/seeds/seed.ts`.
 - `npm run clean` - elimina `dist`.
 - `npm run copy:views` - copia `src/views` a `dist/views`.
 - `npm run copy:public` - copia `src/public` a `dist/public`.
 - `npm run copy:assets` - copia vistas y assets publicos.
 
-## Estructura del proyecto
+## Modelos Creados
+
+- `User`
+- `Author`
+- `Situation`
+- `QuoteType`
+- `Quote`
+- `Favorite`
+
+Relaciones principales:
+
+- `Quote.author` referencia a `Author`.
+- `Quote.situation` referencia a `Situation`.
+- `Quote.quoteType` referencia a `QuoteType`.
+- `Favorite.user` referencia a `User`.
+- `Favorite.quote` referencia a `Quote`.
+
+## Tipos de Dominio
+
+Sprint 02 incorpora tipos cerrados mediante constantes `as const`:
+
+- `UserRole`
+- `AgeGroup`
+- `AuthorType`
+- `SourceType`
+- `ContentRating`
+- `VerificationStatus`
+- `QuoteTypeSlug`
+
+Slugs tecnicos oficiales de `QuoteType`:
+
+- `stoic`
+- `philosophical`
+- `motivational`
+- `funny`
+- `realistic`
+- `sarcastic`
+- `wise_advice`
+- `excuse`
+
+Los slugs se mantienen en ingles para estabilidad tecnica. Los nombres visibles pueden estar en castellano.
+
+## Estructura del Proyecto
 
 ```text
 QuoteMatic/
@@ -109,11 +197,22 @@ QuoteMatic/
 │   ├── controllers/
 │   │   ├── health.controller.ts
 │   │   └── home.controller.ts
+│   ├── models/
+│   │   ├── Author.ts
+│   │   ├── Favorite.ts
+│   │   ├── Quote.ts
+│   │   ├── QuoteType.ts
+│   │   ├── Situation.ts
+│   │   └── User.ts
 │   ├── public/
 │   │   └── styles.css
 │   ├── routes/
 │   │   ├── health.routes.ts
 │   │   └── index.routes.ts
+│   ├── seeds/
+│   │   └── seed.ts
+│   ├── types/
+│   │   └── domain.types.ts
 │   ├── views/
 │   │   └── index.ejs
 │   ├── app.ts
@@ -126,18 +225,28 @@ QuoteMatic/
 
 ## Flujo Git
 
-- Rama de trabajo del Sprint 01: `feat/typescript-project-setup`.
+- Rama de trabajo del Sprint 02: `feat/domain-models-and-seed`.
 - Rama destino: `dev`.
 - `main` queda como rama estable.
 - El flujo recomendado es trabajar por ramas `feat/*`, validar localmente y abrir PR hacia `dev`.
 
-## Roadmap resumido
+## Roadmap
 
-- Sprint 01: setup tecnico base con Express, TypeScript, EJS, MongoDB config y Docker Compose.
-- Sprint 02: tipos de dominio, modelos Mongoose principales y seed inicial.
-- Sprint posterior: autenticacion, sesiones, roles, age gate y favoritos.
-- Sprints posteriores: CRUD, logica de recomendacion de frases y mejoras de minifront.
+- Sprint 03: autenticacion, sesiones, roles y age gate.
+- Sprint 04: dashboard inicial y recomendacion de frases.
+- Sprint 05: CRUD admin para gestionar contenido.
 
-## Nota de alcance
+## Nota de Alcance
 
-Este repositorio todavia no implementa autenticacion, CRUD completo, modelos de dominio completos ni logica de recomendacion de frases. Esas funcionalidades quedan planificadas para siguientes sprints.
+QuoteMatic todavia no implementa:
+
+- Login.
+- Register.
+- Logout.
+- CRUD admin.
+- Favoritos funcionales.
+- APIs externas.
+- Dashboard avanzado.
+- Recomendacion completa de frases.
+
+Estas funcionalidades quedan planificadas para los siguientes sprints.
