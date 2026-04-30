@@ -4,6 +4,7 @@ import path from "path";
 import healthRoutes from "./routes/health.routes";
 import indexRoutes from "./routes/index.routes";
 import quoteApiRoutes from "./routes/api/quoteApi.routes";
+import catalogApiRoutes from "./routes/api/catalogApi.routes";
 
 const app = express();
 
@@ -19,5 +20,6 @@ app.use("/", indexRoutes);
 app.use("/health", healthRoutes);
 
 app.use("/api/quotes", quoteApiRoutes);
+app.use("/api", catalogApiRoutes);
 
 export default app;
