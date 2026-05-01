@@ -23,6 +23,7 @@ import type {
 
 dotenv.config();
 
+// Tipo intermedio para escribir las frases con datos faciles de leer.
 // Estructura usada solo por el seed antes de convertir referencias legibles
 // (nombre de autor y slugs) en ObjectIds de MongoDB.
 type QuoteSeedItem = {
@@ -60,6 +61,8 @@ const connectSeedDatabase = async (): Promise<void> => {
 };
 
 const runSeed = async (): Promise<void> => {
+  // Primero se abre la conexion porque todas las operaciones siguientes
+  // escriben directamente en MongoDB.
   await connectSeedDatabase();
 
   console.log("Cleaning previous seed data...");
@@ -74,6 +77,7 @@ const runSeed = async (): Promise<void> => {
 
   console.log("Creating authors...");
 
+  // Catalogo inicial de autores disponibles para relacionar con frases.
   const authors = await Author.insertMany([
     {
       name: "Marco Aurelio",
@@ -125,6 +129,7 @@ const runSeed = async (): Promise<void> => {
 
   console.log("Creating situations...");
 
+  // Situaciones o contextos que luego se usaran para consultar/recomendar frases.
   const situations = await Situation.insertMany([
     {
       name: "Trabajo",
@@ -159,6 +164,7 @@ const runSeed = async (): Promise<void> => {
 
   console.log("Creating quote types...");
 
+  // Tipos de frase del MVP. El slug es tecnico y estable; el name es visible.
   const quoteTypes = await QuoteType.insertMany([
     {
       name: "Estoica",
@@ -225,6 +231,8 @@ const runSeed = async (): Promise<void> => {
 
   console.log("Creating quotes...");
 
+  // Frases iniciales escritas con referencias humanas para que el seed sea
+  // facil de mantener durante el bootcamp.
   const quotesSeed: QuoteSeedItem[] = [
     {
       text: "Tienes poder sobre tu mente, no sobre los acontecimientos externos.",
@@ -374,8 +382,10 @@ const runSeed = async (): Promise<void> => {
     };
   });
 
+  // Inserta todas las frases ya transformadas a documentos validos de Mongoose.
   await Quote.insertMany(quotes);
 
+  // Resumen final util para comprobar rapidamente que el seed cargo lo esperado.
   console.log("Seed completed successfully");
   console.log(`Authors: ${authors.length}`);
   console.log(`Situations: ${situations.length}`);
@@ -385,10 +395,13 @@ const runSeed = async (): Promise<void> => {
 
 runSeed()
   .catch((error) => {
+    // Si algo falla, se marca codigo de salida distinto de 0 para detectar el error
+    // en terminal o en futuros procesos de CI.
     console.error("Seed failed:", error);
     process.exitCode = 1;
   })
   .finally(async () => {
+    // La conexion se cierra siempre, tanto si el seed termina bien como si falla.
     await mongoose.connection.close();
     console.log("MongoDB connection closed");
   });
