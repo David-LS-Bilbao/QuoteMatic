@@ -5,7 +5,11 @@ import { Quote } from "../../models/Quote";
 import { QuoteType } from "../../models/QuoteType";
 import { Author } from "../../models/Author";
 import { Situation } from "../../models/Situation";
-import { CONTENT_RATINGS } from "../../types/domain.types";
+import {
+  CONTENT_RATINGS,
+  SOURCE_TYPES,
+  VERIFICATION_STATUSES,
+} from "../../types/domain.types";
 
 
 
@@ -28,6 +32,81 @@ const isValidMongoId = (id: string): boolean => {
 const isValidContentRating = (value: string): boolean => {
   return (CONTENT_RATINGS as readonly string[]).includes(value);
 };  
+
+// helper para validar que el valor de verificationStatus es uno de los permitidos antes de filtrar o guardar.
+
+
+const isValidVerificationStatus = (value: string): boolean => {
+  return (VERIFICATION_STATUSES as readonly string[]).includes(value);
+};
+
+const isValidSourceType = (value: string): boolean => {
+  return (SOURCE_TYPES as readonly string[]).includes(value);
+};
+
+const normalizeText = (value: string): string => {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+};
+
+const validateQuoteReferences = async (
+  author?: unknown,
+  situation?: unknown,
+  quoteType?: unknown
+): Promise<string | null> => {
+  if (author !== undefined) {
+    if (typeof author !== "string" || !isValidMongoId(author)) {
+      return "Invalid author id";
+    }
+
+    const authorExists = await Author.exists({
+      _id: author,
+      isActive: true,
+    });
+
+    if (!authorExists) {
+      return "Author not found";
+    }
+  }
+
+  if (situation !== undefined) {
+    if (typeof situation !== "string" || !isValidMongoId(situation)) {
+      return "Invalid situation id";
+    }
+
+    const situationExists = await Situation.exists({
+      _id: situation,
+      isActive: true,
+    });
+
+    if (!situationExists) {
+      return "Situation not found";
+    }
+  }
+
+  if (quoteType !== undefined) {
+    if (typeof quoteType !== "string" || !isValidMongoId(quoteType)) {
+      return "Invalid quoteType id";
+    }
+
+    const quoteTypeExists = await QuoteType.exists({
+      _id: quoteType,
+      isActive: true,
+    });
+
+    if (!quoteTypeExists) {
+      return "QuoteType not found";
+    }
+  }
+
+  return null;
+};
+
+
+
 
 
 // Respuesta comun para errores inesperados de la API de frases.
@@ -200,3 +279,282 @@ if (typeof id !== "string" || !isValidMongoId(id)) {
     handleApiError(error, res);
   }
 };
+
+
+// Valida el formato del id antes de consultar MongoDB y evita errores de casting. 
+
+export const createQuote = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const {
+      text,
+      author,
+      situation,
+      quoteType,
+      language,
+      contentRating,
+      verificationStatus,
+      sourceType = "unknown",
+      sourceReference,
+    } = req.body;
+
+    if (
+      typeof text !== "string" ||
+      !text.trim() ||
+      typeof author !== "string" ||
+      typeof situation !== "string" ||
+      typeof quoteType !== "string" ||
+      typeof language !== "string" ||
+      typeof contentRating !== "string" ||
+      typeof verificationStatus !== "string"
+    ) {
+      res.status(400).json({
+        success: false,
+        message:
+          "Required fields: text, author, situation, quoteType, language, contentRating, verificationStatus",
+      });
+      return;
+    }
+
+    if (!isValidContentRating(contentRating)) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid contentRating. Allowed values: all, teen, adult",
+      });
+      return;
+    }
+
+    if (!isValidVerificationStatus(verificationStatus)) {
+      res.status(400).json({
+        success: false,
+        message:
+          "Invalid verificationStatus. Allowed values: original, pending, manual_verified, rejected, disputed",
+      });
+      return;
+    }
+
+    if (typeof sourceType !== "string" || !isValidSourceType(sourceType)) {
+      res.status(400).json({
+        success: false,
+        message:
+          "Invalid sourceType. Allowed values: book, movie, tv_show, historical, original, unknown",
+      });
+      return;
+    }
+
+    const referenceError = await validateQuoteReferences(
+      author,
+      situation,
+      quoteType
+    );
+
+    if (referenceError) {
+      res.status(400).json({
+        success: false,
+        message: referenceError,
+      });
+      return;
+    }
+
+    const quote = await Quote.create({
+      text,
+      textNormalized: normalizeText(text),
+      author,
+      situation,
+      quoteType,
+      language,
+      contentRating,
+      sourceType,
+      sourceReference,
+      verificationStatus,
+      isActive: true,
+    });
+
+    const createdQuote = await Quote.findById(quote._id).populate(quotePopulate);
+
+    res.status(201).json({
+      success: true,
+      data: createdQuote,
+    });
+  } catch (error) {
+    handleApiError(error, res);
+  }
+};
+
+export const updateQuote = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const id = req.params.id;
+
+    if (typeof id !== "string" || !isValidMongoId(id)) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid quote id",
+      });
+      return;
+    }
+
+    const quoteExists = await Quote.exists({ _id: id, isActive: true });
+
+    if (!quoteExists) {
+      res.status(404).json({
+        success: false,
+        message: "Quote not found",
+      });
+      return;
+    }
+
+    const { author, situation, quoteType } = req.body;
+
+    const referenceError = await validateQuoteReferences(
+      author,
+      situation,
+      quoteType
+    );
+
+    if (referenceError) {
+      res.status(400).json({
+        success: false,
+        message: referenceError,
+      });
+      return;
+    }
+
+    const updateData: Record<string, unknown> = {};
+    const allowedFields = [
+      "author",
+      "situation",
+      "quoteType",
+      "language",
+      "contentRating",
+      "sourceType",
+      "sourceReference",
+      "verificationStatus",
+    ];
+
+    if (req.body.text !== undefined) {
+      if (typeof req.body.text !== "string" || !req.body.text.trim()) {
+        res.status(400).json({
+          success: false,
+          message: "Invalid text",
+        });
+        return;
+      }
+
+      updateData.text = req.body.text;
+      updateData.textNormalized = normalizeText(req.body.text);
+    }
+
+    if (req.body.contentRating !== undefined) {
+      if (
+        typeof req.body.contentRating !== "string" ||
+        !isValidContentRating(req.body.contentRating)
+      ) {
+        res.status(400).json({
+          success: false,
+          message: "Invalid contentRating. Allowed values: all, teen, adult",
+        });
+        return;
+      }
+    }
+
+    if (req.body.verificationStatus !== undefined) {
+      if (
+        typeof req.body.verificationStatus !== "string" ||
+        !isValidVerificationStatus(req.body.verificationStatus)
+      ) {
+        res.status(400).json({
+          success: false,
+          message:
+            "Invalid verificationStatus. Allowed values: original, pending, manual_verified, rejected, disputed",
+        });
+        return;
+      }
+    }
+
+    if (req.body.sourceType !== undefined) {
+      if (
+        typeof req.body.sourceType !== "string" ||
+        !isValidSourceType(req.body.sourceType)
+      ) {
+        res.status(400).json({
+          success: false,
+          message:
+            "Invalid sourceType. Allowed values: book, movie, tv_show, historical, original, unknown",
+        });
+        return;
+      }
+    }
+
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    }
+
+    const updatedQuote = await Quote.findOneAndUpdate(
+      { _id: id, isActive: true },
+      updateData,
+      {
+        new: true,
+        runValidators: true,
+      }
+    ).populate(quotePopulate);
+
+    res.status(200).json({
+      success: true,
+      data: updatedQuote,
+    });
+  } catch (error) {
+    handleApiError(error, res);
+  }
+};
+
+
+export const deleteQuote = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const id = req.params.id;
+
+    if (typeof id !== "string" || !isValidMongoId(id)) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid quote id",
+      });
+      return;
+    }
+
+    const deletedQuote = await Quote.findByIdAndUpdate(
+      id,
+      { isActive: false },
+      {
+        new: true,
+        runValidators: true,
+      }
+    ).populate(quotePopulate);
+
+    if (!deletedQuote) {
+      res.status(404).json({
+        success: false,
+        message: "Quote not found",
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: deletedQuote,
+    });
+  } catch (error) {
+    handleApiError(error, res);
+  }
+};
+
+
+
