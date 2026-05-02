@@ -2,13 +2,12 @@ import express from "express";
 import path from "path";
 import session from "express-session";
 import MongoStore from "connect-mongo";
-
 import healthRoutes from "./routes/health.routes";
 import indexRoutes from "./routes/index.routes";
 import quoteApiRoutes from "./routes/api/quoteApi.routes";
 import catalogApiRoutes from "./routes/api/catalogApi.routes";
-
 import authRoutes from "./routes/auth.routes";
+import favoriteApiRoutes from "./routes/api/favoriteApi.routes";
 
 const app = express();
 
@@ -54,5 +53,5 @@ app.use("/health", healthRoutes);
 
 app.use("/api/quotes", quoteApiRoutes);
 app.use("/api", catalogApiRoutes);
-
+app.use("/api/favorites", favoriteApiRoutes);
 export default app;
