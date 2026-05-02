@@ -54,4 +54,20 @@ app.use("/health", healthRoutes);
 app.use("/api/quotes", quoteApiRoutes);
 app.use("/api", catalogApiRoutes);
 app.use("/api/favorites", favoriteApiRoutes);
+
+
+app.use("/api", (_req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "API route not found",
+  });
+});
+    /*
+    Solo afecta a rutas que empiezan por /api.
+    No rompe las vistas EJS.
+    Devuelve JSON limpio para rutas API inexistentes.
+    Mejora el hardening mínimo del MVP.
+    */
+
+
 export default app;

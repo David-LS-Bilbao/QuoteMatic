@@ -8,6 +8,8 @@ import {
   getRandomQuote,
   updateQuote,
 } from "../../controllers/api/quoteApi.controller";
+import { isAuthenticated } from "../../middlewares/auth.middleware";
+import { isAdmin } from "../../middlewares/role.middleware";
 
 const router = Router();
 
@@ -21,13 +23,19 @@ router.get("/random", getRandomQuote);
 // Devuelve una frase concreta por su ObjectId de MongoDB.
 router.get("/:id", getQuoteById);
 
-// Crea una nueva frase a partir de los datos enviados en el cuerpo de la solicitud.
-router.post("/", createQuote);
+// Crea una nueva frase. Solo usuarios admin autenticados.
+router.post("/", isAuthenticated, isAdmin, createQuote);
 
-// Actualiza una frase existente identificada por su ObjectId de MongoDB.
-router.put("/:id", updateQuote);
+// Actualiza una frase existente. Solo usuarios admin autenticados.
+router.put("/:id", isAuthenticated, isAdmin, updateQuote);
 
-// Elimina una frase concreta por su ObjectId de MongoDB.
-router.delete("/:id", deleteQuote);
+// Elimina una frase mediante borrado lógico. Solo usuarios admin autenticados.
+router.delete("/:id", isAuthenticated, isAdmin, deleteQuote);
 
 export default router;
+
+/*
+Separa rutas de controller.
+Protege todos los endpoints con isAuthenticated.
+Mantiene MVC simple.
+*/
