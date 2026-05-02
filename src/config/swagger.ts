@@ -1,0 +1,587 @@
+import swaggerJSDoc, { type Options } from "swagger-jsdoc";
+
+const swaggerOptions: Options = {
+  definition: {
+    openapi: "3.0.3",
+    info: {
+      title: "QuoteMatic API",
+      version: "1.0.0",
+      description:
+        "Documentacion OpenAPI para QuoteMatic: API REST de frases, catalogos, auth y favoritos.",
+    },
+    servers: [
+      {
+        url: "http://localhost:3000",
+        description: "Servidor local de desarrollo",
+      },
+    ],
+    tags: [
+      { name: "Base", description: "Salud y estado de la aplicacion" },
+      { name: "Auth", description: "Registro, login, logout y sesion" },
+      { name: "Catalogs", description: "Catalogos publicos" },
+      { name: "Quotes", description: "Frases y CRUD protegido" },
+      { name: "Favorites", description: "Favoritos del usuario autenticado" },
+    ],
+    components: {
+      securitySchemes: {
+        cookieAuth: {
+          type: "apiKey",
+          in: "cookie",
+          name: "connect.sid",
+          description: "Sesion Express persistida en MongoDB.",
+        },
+      },
+      schemas: {
+        ApiSuccess: {
+          type: "object",
+          properties: {
+            success: { type: "boolean", example: true },
+            data: { type: "object" },
+          },
+        },
+        ApiError: {
+          type: "object",
+          properties: {
+            success: { type: "boolean", example: false },
+            message: { type: "string", example: "Authentication required" },
+          },
+        },
+        Author: {
+          type: "object",
+          properties: {
+            _id: { type: "string", example: "662f00000000000000000001" },
+            name: { type: "string", example: "Marco Aurelio" },
+            authorType: { type: "string", example: "historical" },
+            sourceWork: { type: "string", example: "Meditaciones" },
+            isActive: { type: "boolean", example: true },
+          },
+        },
+        Situation: {
+          type: "object",
+          properties: {
+            _id: { type: "string", example: "662f00000000000000000002" },
+            name: { type: "string", example: "Trabajo" },
+            slug: { type: "string", example: "trabajo" },
+            description: {
+              type: "string",
+              example: "Frases para afrontar retos laborales.",
+            },
+            isActive: { type: "boolean", example: true },
+          },
+        },
+        QuoteType: {
+          type: "object",
+          properties: {
+            _id: { type: "string", example: "662f00000000000000000003" },
+            name: { type: "string", example: "Estoica" },
+            slug: { type: "string", example: "stoic" },
+            description: {
+              type: "string",
+              example: "Frases centradas en autocontrol, perspectiva y virtud.",
+            },
+            contentRating: { type: "string", example: "all" },
+            isActive: { type: "boolean", example: true },
+          },
+        },
+        Quote: {
+          type: "object",
+          properties: {
+            _id: { type: "string", example: "662f00000000000000000004" },
+            text: {
+              type: "string",
+              example: "Tienes poder sobre tu mente, no sobre los acontecimientos externos.",
+            },
+            textNormalized: {
+              type: "string",
+              example: "tienes poder sobre tu mente, no sobre los acontecimientos externos.",
+            },
+            author: { $ref: "#/components/schemas/Author" },
+            situation: { $ref: "#/components/schemas/Situation" },
+            quoteType: { $ref: "#/components/schemas/QuoteType" },
+            language: { type: "string", example: "es" },
+            contentRating: { type: "string", example: "all" },
+            sourceType: { type: "string", example: "book" },
+            sourceReference: { type: "string", example: "Meditaciones" },
+            verificationStatus: { type: "string", example: "pending" },
+            isActive: { type: "boolean", example: true },
+          },
+        },
+        Favorite: {
+          type: "object",
+          properties: {
+            _id: { type: "string", example: "662f00000000000000000005" },
+            user: { type: "string", example: "662f00000000000000000006" },
+            quote: { $ref: "#/components/schemas/Quote" },
+            isActive: { type: "boolean", example: true },
+          },
+        },
+        UserSession: {
+          type: "object",
+          properties: {
+            authenticated: { type: "boolean", example: true },
+            user: {
+              type: "object",
+              properties: {
+                userId: { type: "string", example: "662f00000000000000000006" },
+                role: { type: "string", example: "user" },
+                ageGroup: { type: "string", example: "adult_18_plus" },
+              },
+            },
+          },
+        },
+        RegisterRequest: {
+          type: "object",
+          required: ["name", "email", "password", "ageRange"],
+          properties: {
+            name: { type: "string", example: "David" },
+            email: { type: "string", example: "user@example.com" },
+            password: { type: "string", example: "password123" },
+            ageRange: { type: "string", example: "adult_18_plus" },
+          },
+        },
+        LoginRequest: {
+          type: "object",
+          required: ["email", "password"],
+          properties: {
+            email: { type: "string", example: "user@example.com" },
+            password: { type: "string", example: "password123" },
+          },
+        },
+        CreateQuoteRequest: {
+          type: "object",
+          required: [
+            "text",
+            "author",
+            "situation",
+            "quoteType",
+            "language",
+            "contentRating",
+            "verificationStatus",
+          ],
+          properties: {
+            text: { type: "string", example: "Frase de prueba desde Swagger" },
+            author: { type: "string", example: "AUTHOR_ID" },
+            situation: { type: "string", example: "SITUATION_ID" },
+            quoteType: { type: "string", example: "QUOTE_TYPE_ID" },
+            language: { type: "string", example: "es" },
+            contentRating: { type: "string", example: "all" },
+            verificationStatus: { type: "string", example: "pending" },
+            sourceType: { type: "string", example: "original" },
+            sourceReference: { type: "string", example: "Swagger" },
+          },
+        },
+        UpdateQuoteRequest: {
+          type: "object",
+          properties: {
+            text: { type: "string", example: "Frase actualizada desde Swagger" },
+            contentRating: { type: "string", example: "teen" },
+            verificationStatus: { type: "string", example: "manual_verified" },
+            sourceType: { type: "string", example: "original" },
+            sourceReference: { type: "string", example: "Swagger" },
+          },
+        },
+      },
+    },
+    paths: {
+      "/health": {
+        get: {
+          tags: ["Base"],
+          summary: "Comprueba el estado del servidor",
+          responses: {
+            "200": {
+              description: "Servidor operativo",
+            },
+          },
+        },
+      },
+      "/auth/register": {
+        get: {
+          tags: ["Auth"],
+          summary: "Renderiza el formulario de registro",
+          responses: {
+            "200": { description: "Vista EJS de registro" },
+          },
+        },
+        post: {
+          tags: ["Auth"],
+          summary: "Registra un usuario",
+          requestBody: {
+            required: true,
+            content: {
+              "application/x-www-form-urlencoded": {
+                schema: { $ref: "#/components/schemas/RegisterRequest" },
+              },
+            },
+          },
+          responses: {
+            "302": { description: "Usuario creado y redireccion a login" },
+            "400": { description: "Datos invalidos" },
+            "403": { description: "Menor de 14 no permitido" },
+            "409": { description: "Email ya registrado" },
+          },
+        },
+      },
+      "/auth/login": {
+        get: {
+          tags: ["Auth"],
+          summary: "Renderiza el formulario de login",
+          responses: {
+            "200": { description: "Vista EJS de login" },
+          },
+        },
+        post: {
+          tags: ["Auth"],
+          summary: "Inicia sesion",
+          requestBody: {
+            required: true,
+            content: {
+              "application/x-www-form-urlencoded": {
+                schema: { $ref: "#/components/schemas/LoginRequest" },
+              },
+            },
+          },
+          responses: {
+            "302": { description: "Login correcto y cookie de sesion creada" },
+            "401": { description: "Credenciales incorrectas" },
+            "403": { description: "Usuario inactivo" },
+          },
+        },
+      },
+      "/auth/logout": {
+        post: {
+          tags: ["Auth"],
+          summary: "Cierra sesion",
+          security: [{ cookieAuth: [] }],
+          responses: {
+            "302": { description: "Sesion destruida y redireccion al inicio" },
+          },
+        },
+      },
+      "/auth/me": {
+        get: {
+          tags: ["Auth"],
+          summary: "Devuelve la sesion actual",
+          security: [{ cookieAuth: [] }],
+          responses: {
+            "200": {
+              description: "Estado de autenticacion",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/UserSession" },
+                },
+              },
+            },
+            "401": { description: "Sesion requerida" },
+          },
+        },
+      },
+      "/auth/admin-check": {
+        get: {
+          tags: ["Auth"],
+          summary: "Comprueba acceso admin",
+          security: [{ cookieAuth: [] }],
+          responses: {
+            "200": { description: "Usuario admin autorizado" },
+            "401": { description: "Sesion requerida" },
+            "403": { description: "Rol admin requerido" },
+          },
+        },
+      },
+      "/api/authors": {
+        get: {
+          tags: ["Catalogs"],
+          summary: "Lista autores activos",
+          responses: {
+            "200": {
+              description: "Autores activos",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean", example: true },
+                      data: {
+                        type: "array",
+                        items: { $ref: "#/components/schemas/Author" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/api/situations": {
+        get: {
+          tags: ["Catalogs"],
+          summary: "Lista situaciones activas",
+          responses: {
+            "200": {
+              description: "Situaciones activas",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean", example: true },
+                      data: {
+                        type: "array",
+                        items: { $ref: "#/components/schemas/Situation" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/api/quote-types": {
+        get: {
+          tags: ["Catalogs"],
+          summary: "Lista tipos de frase activos",
+          responses: {
+            "200": {
+              description: "Tipos de frase activos",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean", example: true },
+                      data: {
+                        type: "array",
+                        items: { $ref: "#/components/schemas/QuoteType" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/api/quotes": {
+        get: {
+          tags: ["Quotes"],
+          summary: "Lista frases activas",
+          parameters: [
+            {
+              name: "contentRating",
+              in: "query",
+              required: false,
+              schema: { type: "string", enum: ["all", "teen", "adult"] },
+            },
+          ],
+          responses: {
+            "200": {
+              description: "Frases activas",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean", example: true },
+                      data: {
+                        type: "array",
+                        items: { $ref: "#/components/schemas/Quote" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        post: {
+          tags: ["Quotes"],
+          summary: "Crea una frase",
+          description: "Requiere sesion activa y rol admin.",
+          security: [{ cookieAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/CreateQuoteRequest" },
+              },
+            },
+          },
+          responses: {
+            "201": { description: "Frase creada" },
+            "400": { description: "Payload o referencias invalidas" },
+            "401": { description: "Sesion requerida" },
+            "403": { description: "Rol admin requerido" },
+          },
+        },
+      },
+      "/api/quotes/random": {
+        get: {
+          tags: ["Quotes"],
+          summary: "Devuelve una frase aleatoria activa",
+          parameters: [
+            {
+              name: "contentRating",
+              in: "query",
+              required: false,
+              schema: { type: "string", enum: ["all", "teen", "adult"] },
+            },
+            {
+              name: "quoteType",
+              in: "query",
+              required: false,
+              schema: { type: "string", example: "stoic" },
+            },
+          ],
+          responses: {
+            "200": { description: "Frase aleatoria" },
+            "404": { description: "No hay frases activas para el filtro" },
+          },
+        },
+      },
+      "/api/quotes/{id}": {
+        get: {
+          tags: ["Quotes"],
+          summary: "Devuelve una frase activa por id",
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+            },
+          ],
+          responses: {
+            "200": { description: "Frase encontrada" },
+            "400": { description: "Id invalido" },
+            "404": { description: "Frase no encontrada" },
+          },
+        },
+        put: {
+          tags: ["Quotes"],
+          summary: "Actualiza parcialmente una frase",
+          description: "Requiere sesion activa y rol admin.",
+          security: [{ cookieAuth: [] }],
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+            },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/UpdateQuoteRequest" },
+              },
+            },
+          },
+          responses: {
+            "200": { description: "Frase actualizada" },
+            "400": { description: "Payload o id invalido" },
+            "401": { description: "Sesion requerida" },
+            "403": { description: "Rol admin requerido" },
+            "404": { description: "Frase no encontrada" },
+          },
+        },
+        delete: {
+          tags: ["Quotes"],
+          summary: "Borra logicamente una frase",
+          description: "Requiere sesion activa y rol admin. Marca isActive=false.",
+          security: [{ cookieAuth: [] }],
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+            },
+          ],
+          responses: {
+            "200": { description: "Frase desactivada" },
+            "400": { description: "Id invalido" },
+            "401": { description: "Sesion requerida" },
+            "403": { description: "Rol admin requerido" },
+            "404": { description: "Frase no encontrada" },
+          },
+        },
+      },
+      "/api/favorites/me": {
+        get: {
+          tags: ["Favorites"],
+          summary: "Lista favoritos activos del usuario autenticado",
+          security: [{ cookieAuth: [] }],
+          responses: {
+            "200": {
+              description: "Favoritos activos",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean", example: true },
+                      data: {
+                        type: "array",
+                        items: { $ref: "#/components/schemas/Favorite" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            "401": { description: "Sesion requerida" },
+          },
+        },
+      },
+      "/api/favorites/{quoteId}": {
+        post: {
+          tags: ["Favorites"],
+          summary: "Añade o reactiva una frase favorita",
+          description:
+            "Requiere sesion. Evita duplicados y reactiva favoritos inactivos.",
+          security: [{ cookieAuth: [] }],
+          parameters: [
+            {
+              name: "quoteId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+            },
+          ],
+          responses: {
+            "201": { description: "Favorito creado" },
+            "200": { description: "Favorito existente o reactivado" },
+            "400": { description: "Id invalido" },
+            "401": { description: "Sesion requerida" },
+            "404": { description: "Quote no encontrada" },
+          },
+        },
+        delete: {
+          tags: ["Favorites"],
+          summary: "Quita una frase de favoritos",
+          description: "Requiere sesion. Usa borrado logico con isActive=false.",
+          security: [{ cookieAuth: [] }],
+          parameters: [
+            {
+              name: "quoteId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+            },
+          ],
+          responses: {
+            "200": { description: "Favorito desactivado" },
+            "400": { description: "Id invalido" },
+            "401": { description: "Sesion requerida" },
+            "404": { description: "Favorito activo no encontrado" },
+          },
+        },
+      },
+    },
+  },
+  apis: [],
+};
+
+export const swaggerSpec = swaggerJSDoc(swaggerOptions);
