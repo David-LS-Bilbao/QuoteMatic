@@ -2,19 +2,19 @@
 
 QuoteMatic es una aplicación backend con minifront en EJS que recomienda frases según la situación del usuario, el tipo de frase y el rango de edad declarado.
 
-Estado actual: **Sprint 04 completado en la rama `feat/auth-sessions-age-gate`**.
+Estado actual: **Sprint 06 completado — Autorización admin + hardening MVP**.
 
-Sprint 04 incorpora autenticación básica con registro, login, logout, sesiones persistidas en MongoDB, roles `user/admin` y bloqueo de menores de 14 años.
+Sprint 06 cierra el MVP backend conectando roles reales con el CRUD de `Quote`: lecturas públicas, favoritos protegidos por sesión y escritura de frases reservada a admin.
 
 ## Enfoque Actual del MVP
 
 QuoteMatic se mantiene como un proyecto backend pequeño y centrado en demostrar dominio práctico de:
 
 ```text
-MongoDB + Mongoose + Seed + API REST simple + CRUD mínimo + Auth básica
+MongoDB + Mongoose + Seed + API REST simple + CRUD mínimo + Auth + Favoritos + Autorización admin
 ```
 
-Las vistas EJS son mínimas y funcionan como apoyo visual. El valor principal del MVP está en levantar MongoDB, ejecutar el seed, probar endpoints REST sobre datos reales y demostrar un flujo básico de usuario con sesiones.
+Las vistas EJS son mínimas y funcionan como apoyo visual. El valor principal del MVP está en levantar MongoDB, ejecutar el seed, probar endpoints REST sobre datos reales y demostrar sesiones, favoritos y autorización básica por rol.
 
 ## Stack
 
@@ -55,14 +55,6 @@ SESSION_SECRET=change_me_in_development
 
 Para desarrollo local, crea un archivo `.env` en la raíz tomando como referencia `.env.example`.
 
-Ejemplo local:
-
-```env
-PORT=3000
-MONGODB_URI=mongodb://127.0.0.1:27017/quotematic
-SESSION_SECRET=quotematic_dev_secret_change_me
-```
-
 Notas:
 
 - No subir `.env` al repositorio.
@@ -98,15 +90,16 @@ El seed:
 - Inserta 12 frases.
 - Valida referencias internas antes de insertar frases.
 - No crea usuarios por defecto.
+- No crea usuarios admin por defecto.
 
 ### Nota WSL
 
 En algunos entornos WSL, `tsx` puede fallar al crear un socket temporal en una ruta montada de Windows.
 
-Si `npm run seed` falla con `listen ENOTSUP`, usar:
+Si `npm run seed` falla con `listen ENOTSUP` o `EPERM`, usar:
 
 ```bash
-TMPDIR=/tmp npm run seed
+TMPDIR=/tmp TEMP=/tmp TMP=/tmp npm run seed
 ```
 
 ## Ejecutar en Desarrollo
@@ -151,27 +144,46 @@ Rutas montadas bajo `/auth`:
 - `GET /auth/login`
 - `POST /auth/login`
 - `POST /auth/logout`
-- `GET /auth/me`
-- `GET /auth/admin-check`
+- `GET /auth/me` - requiere sesión.
+- `GET /auth/admin-check` - requiere sesión y rol `admin`.
 
 ### Quote API
 
 Rutas montadas bajo `/api/quotes`:
 
-- `GET /api/quotes`
-- `GET /api/quotes/:id`
-- `GET /api/quotes/random`
-- `POST /api/quotes`
-- `PUT /api/quotes/:id`
-- `DELETE /api/quotes/:id`
+- `GET /api/quotes` - público.
+- `GET /api/quotes/:id` - público.
+- `GET /api/quotes/random` - público.
+- `POST /api/quotes` - requiere sesión y rol `admin`.
+- `PUT /api/quotes/:id` - requiere sesión y rol `admin`.
+- `DELETE /api/quotes/:id` - requiere sesión y rol `admin`.
 
 ### Catalog API
 
 Rutas montadas bajo `/api`:
 
-- `GET /api/authors`
-- `GET /api/situations`
-- `GET /api/quote-types`
+- `GET /api/authors` - público.
+- `GET /api/situations` - público.
+- `GET /api/quote-types` - público.
+
+### Favorites API
+
+Rutas montadas bajo `/api/favorites`:
+
+- `GET /api/favorites/me` - requiere sesión.
+- `POST /api/favorites/:quoteId` - requiere sesión.
+- `DELETE /api/favorites/:quoteId` - requiere sesión.
+
+### API 404
+
+Rutas inexistentes bajo `/api/*` devuelven JSON:
+
+```json
+{
+  "success": false,
+  "message": "API route not found"
+}
+```
 
 ## Flujo de Prueba Completo
 
@@ -205,7 +217,7 @@ npm run seed
 Si falla en WSL por socket temporal:
 
 ```bash
-TMPDIR=/tmp npm run seed
+TMPDIR=/tmp TEMP=/tmp TMP=/tmp npm run seed
 ```
 
 5. Arrancar servidor.
@@ -214,7 +226,7 @@ TMPDIR=/tmp npm run seed
 npm run dev
 ```
 
-6. Probar endpoints base y API.
+6. Probar endpoints públicos.
 
 ```bash
 curl http://localhost:3000/health
@@ -225,24 +237,9 @@ curl http://localhost:3000/api/quotes
 curl http://localhost:3000/api/quotes/random
 ```
 
-7. Probar autenticación desde navegador.
-
-```text
-http://localhost:3000/auth/register
-http://localhost:3000/auth/login
-http://localhost:3000/auth/me
-http://localhost:3000/auth/admin-check
-```
-
-Comprobación rápida de sesión:
-
-```bash
-curl http://localhost:3000/auth/me
-```
-
 ## Autenticación y Sesiones
 
-Sprint 04 añade autenticación básica con vistas EJS mínimas.
+Sprint 04 añadió autenticación básica con vistas EJS mínimas.
 
 ### Registro
 
@@ -253,29 +250,9 @@ GET /auth/register
 POST /auth/register
 ```
 
-Campos:
-
-```text
-name
-email
-password
-ageRange
-```
-
-Valores disponibles en el formulario:
-
-```text
-under_14
-teen_14_17
-adult_18_plus
-```
-
 Reglas:
 
 - Menores de 14 años no pueden registrarse.
-- `teen_14_17` se guarda como `ageGroup`.
-- `adult_18_plus` se guarda como `ageGroup`.
-- `under_14` no se guarda en base de datos.
 - La contraseña se guarda como `passwordHash`.
 - No se guarda password en texto plano.
 - El email se normaliza a minúsculas.
@@ -340,53 +317,87 @@ Respuesta con sesión:
 }
 ```
 
-### Comprobación de rol admin
+## Autorización Admin en Quote API
 
-Ruta:
+Sprint 06 conecta los roles reales de usuario con la escritura de frases.
+
+### Rutas públicas
+
+No requieren login:
+
+- `GET /api/quotes`
+- `GET /api/quotes/:id`
+- `GET /api/quotes/random`
+- `GET /api/authors`
+- `GET /api/situations`
+- `GET /api/quote-types`
+
+### Rutas protegidas por sesión
+
+Requieren usuario autenticado:
+
+- `GET /api/favorites/me`
+- `POST /api/favorites/:quoteId`
+- `DELETE /api/favorites/:quoteId`
+- `GET /auth/me`
+
+### Rutas protegidas por admin
+
+Requieren sesión activa y rol `admin`:
+
+- `POST /api/quotes`
+- `PUT /api/quotes/:id`
+- `DELETE /api/quotes/:id`
+
+Estas rutas usan:
 
 ```text
-GET /auth/admin-check
-```
-
-Usa los middlewares:
-
-```text
-isAuthenticated
-isAdmin
+isAuthenticated + isAdmin
 ```
 
 Resultados esperados:
 
-- Sin login: `401`.
-- Usuario normal: `403`.
-- Usuario admin: `200`.
+- Sin login: `401 Unauthorized`.
+- Usuario normal: `403 Forbidden`.
+- Usuario admin: operación permitida.
 
-Respuesta para admin:
+### Probar admin con MongoDB Compass
+
+Flujo local recomendado:
+
+1. Crear usuario normal desde `/auth/register`.
+2. Abrir MongoDB Compass.
+3. Ir a la colección `users`.
+4. Cambiar el campo `role` de `"user"` a `"admin"`.
+5. Guardar el documento.
+6. Cerrar sesión.
+7. Volver a iniciar sesión.
+
+Es necesario volver a iniciar sesión porque el rol se guarda en la sesión durante login.
+
+### 404 JSON para `/api/*`
+
+Las rutas inexistentes bajo `/api` devuelven:
 
 ```json
 {
-  "success": true,
-  "message": "Admin access granted"
+  "success": false,
+  "message": "API route not found"
 }
 ```
 
-### Sesiones
+## Favoritos
 
-Las sesiones se guardan en MongoDB mediante `connect-mongo`, usando la colección:
+Sprint 05 añadió favoritos funcionales protegidos por sesión.
 
-```text
-sessions
-```
+Comportamiento:
 
-Configuración de cookies para desarrollo:
-
-```text
-httpOnly: true
-sameSite: lax
-secure: false
-```
-
-La configuración productiva con HTTPS, cookies seguras y endurecimiento adicional queda fuera del alcance del MVP.
+- Un usuario autenticado puede listar sus favoritos.
+- Un usuario autenticado puede añadir una quote a favoritos.
+- Un usuario autenticado puede quitar una quote de favoritos.
+- No se crean duplicados para el mismo usuario y quote.
+- Si un favorito se quitó con borrado lógico, un nuevo POST lo reactiva.
+- Un usuario no puede operar sobre favoritos de otro usuario.
 
 ## Ejemplos Curl
 
@@ -402,7 +413,7 @@ curl http://localhost:3000/health
 curl http://localhost:3000/auth/me
 ```
 
-### Catalogos
+### Catálogos
 
 ```bash
 curl http://localhost:3000/api/authors
@@ -424,6 +435,8 @@ curl http://localhost:3000/api/quotes/random
 
 ### Crear Frase
 
+> Desde Sprint 06, esta operación requiere sesión activa con rol admin.
+
 Reemplaza `AUTHOR_ID`, `SITUATION_ID` y `QUOTE_TYPE_ID` por ids reales obtenidos desde los endpoints de catálogo.
 
 ```bash
@@ -442,13 +455,15 @@ curl -X POST http://localhost:3000/api/quotes \
   }'
 ```
 
-Respuesta esperada:
+Respuesta esperada con admin:
 
 ```text
 HTTP 201
 ```
 
 ### Actualizar Frase
+
+> Desde Sprint 06, esta operación requiere sesión activa con rol admin.
 
 ```bash
 curl -X PUT http://localhost:3000/api/quotes/QUOTE_ID \
@@ -469,6 +484,8 @@ Notas:
 - El `PUT` no opera sobre frases inactivas.
 
 ### Borrado Lógico
+
+> Desde Sprint 06, esta operación requiere sesión activa con rol admin.
 
 ```bash
 curl -X DELETE http://localhost:3000/api/quotes/QUOTE_ID
@@ -495,7 +512,17 @@ Respuesta esperada:
 }
 ```
 
-## Validaciones de Sprint 04
+### Favoritos
+
+Requieren sesión activa.
+
+```bash
+curl http://localhost:3000/api/favorites/me
+curl -X POST http://localhost:3000/api/favorites/QUOTE_ID
+curl -X DELETE http://localhost:3000/api/favorites/QUOTE_ID
+```
+
+## Validaciones de Sprint 06
 
 Comandos recomendados antes de cerrar cambios:
 
@@ -507,38 +534,22 @@ npm run seed
 npm run dev
 ```
 
-Validaciones principales de auth:
+Validaciones principales:
 
-- `GET /auth/register` renderiza formulario.
-- `POST /auth/register` crea usuarios adultos y teen.
-- `POST /auth/register` bloquea menores de 14 años.
-- Password guardada como `passwordHash`.
-- Password no se guarda en texto plano.
-- `GET /auth/login` renderiza formulario.
-- `POST /auth/login` crea sesión.
-- `POST /auth/logout` destruye sesión.
-- `GET /auth/me` comprueba sesión.
-- `GET /auth/admin-check` bloquea usuarios no autenticados.
-- `GET /auth/admin-check` bloquea usuarios normales.
-- `GET /auth/admin-check` permite usuarios admin.
-- Las sesiones se guardan en MongoDB.
-- La API REST de Sprint 03 sigue funcionando.
-
-Validaciones principales de API:
-
-- `POST /api/quotes` valida campos obligatorios.
-- `POST /api/quotes` valida `author`, `situation` y `quoteType` como ObjectId.
-- `POST /api/quotes` valida que las referencias existen y están activas.
-- `POST /api/quotes` genera `textNormalized`.
-- `POST /api/quotes` responde `201`.
-- `PUT /api/quotes/:id` valida id.
-- `PUT /api/quotes/:id` actualiza parcialmente.
-- `PUT /api/quotes/:id` recalcula `textNormalized` si cambia `text`.
-- `PUT /api/quotes/:id` valida `contentRating`, `verificationStatus` y `sourceType`.
-- `PUT /api/quotes/:id` no acepta `isActive` desde el body público.
-- `PUT /api/quotes/:id` no opera sobre recursos inactivos.
-- `DELETE /api/quotes/:id` realiza borrado lógico.
-- `GET /api/quotes/:id` devuelve `404` después del DELETE lógico.
+- `GET /api/quotes` devuelve 200 sin login.
+- `GET /api/quotes/random` devuelve 200 sin login.
+- `GET /api/authors` devuelve 200 sin login.
+- `GET /api/situations` devuelve 200 sin login.
+- `GET /api/quote-types` devuelve 200 sin login.
+- `POST /api/quotes` sin login devuelve 401.
+- `POST /api/quotes` con usuario normal devuelve 403.
+- `POST /api/quotes` con admin devuelve 201.
+- `PUT /api/quotes/:id` con admin devuelve 200.
+- `DELETE /api/quotes/:id` con admin devuelve 200.
+- `GET /api/quotes/:id` tras DELETE lógico devuelve 404.
+- `GET /api/favorites/me` sin login devuelve 401.
+- `GET /api/favorites/me` con login devuelve 200.
+- `GET /api/ruta-inexistente` devuelve 404 JSON.
 - Los errores de API devuelven JSON con `success: false` y `message`.
 
 ## Scripts npm
@@ -643,39 +654,22 @@ QuoteMatic/
 │       ├── SPRINT_03_QA_CHECKLIST.md
 │       ├── SPRINT_04_AUTH_REPORT.md
 │       ├── SPRINT_04_NEXT_STEPS.md
-│       └── SPRINT_04_QA_CHECKLIST.md
+│       ├── SPRINT_04_QA_CHECKLIST.md
+│       ├── SPRINT_05_FAVORITES_REPORT.md
+│       ├── SPRINT_06_ADMIN_PROTECTION_REPORT.md
+│       ├── SPRINT_06_QA_CHECKLIST.md
+│       └── SPRINT_06_NEXT_STEPS.md
 ├── src/
 │   ├── config/
 │   │   └── database.ts
 │   ├── controllers/
-│   │   ├── api/
-│   │   │   ├── catalogApi.controller.ts
-│   │   │   └── quoteApi.controller.ts
-│   │   ├── auth.controller.ts
-│   │   ├── health.controller.ts
-│   │   └── home.controller.ts
 │   ├── middlewares/
-│   │   ├── auth.middleware.ts
-│   │   └── role.middleware.ts
 │   ├── models/
 │   ├── public/
 │   ├── routes/
-│   │   ├── api/
-│   │   │   ├── catalogApi.routes.ts
-│   │   │   └── quoteApi.routes.ts
-│   │   ├── auth.routes.ts
-│   │   ├── health.routes.ts
-│   │   └── index.routes.ts
 │   ├── seeds/
-│   │   └── seed.ts
 │   ├── types/
-│   │   ├── domain.types.ts
-│   │   └── express-session.d.ts
 │   ├── views/
-│   │   ├── auth/
-│   │   │   ├── login.ejs
-│   │   │   └── register.ejs
-│   │   └── index.ejs
 │   ├── app.ts
 │   └── server.ts
 ├── .env.example
@@ -711,9 +705,19 @@ Sprint 04:
 - `docs/sprints/SPRINT_04_QA_CHECKLIST.md`
 - `docs/sprints/SPRINT_04_NEXT_STEPS.md`
 
+Sprint 05:
+
+- `docs/sprints/SPRINT_05_FAVORITES_REPORT.md`
+
+Sprint 06:
+
+- `docs/sprints/SPRINT_06_ADMIN_PROTECTION_REPORT.md`
+- `docs/sprints/SPRINT_06_QA_CHECKLIST.md`
+- `docs/sprints/SPRINT_06_NEXT_STEPS.md`
+
 ## Flujo Git
 
-- Rama de trabajo del Sprint 04: `feat/auth-sessions-age-gate`.
+- Rama de trabajo del Sprint 06: `feat/admin-protected-quotes`.
 - Rama destino: `dev`.
 - `main` queda como rama estable.
 - El flujo recomendado es trabajar por ramas `feat/*`, validar localmente y abrir PR hacia `dev`.
@@ -737,9 +741,9 @@ Commits pequeños y descriptivos:
 
 ```text
 feat(auth): add register flow
-feat(auth): add login and logout flow
-feat(auth): add auth and role middleware
-docs(auth): document sprint 04 auth flow
+feat(favorites): add protected favorites api
+feat(auth): protect quote write endpoints with admin role
+docs(sprint): add sprint 06 admin protection documentation
 ```
 
 ## Roadmap
@@ -748,13 +752,13 @@ docs(auth): document sprint 04 auth flow
 - Sprint 02: modelos de dominio y seed inicial. Completado.
 - Sprint 03: API REST pública de consulta y CRUD básico de `Quote`. Completado.
 - Sprint 04: autenticación, sesiones, roles y age gate. Completado.
-- Sprint 05: favoritos funcionales, rutas protegidas y polish mínimo.
+- Sprint 05: favoritos funcionales, rutas protegidas y polish mínimo. Completado.
+- Sprint 06: protección admin para escritura de quotes y hardening MVP. Completado.
 
 ## Fuera de Alcance Actual
 
 QuoteMatic todavía no implementa:
 
-- Favoritos funcionales.
 - Dashboard.
 - Paginación.
 - Búsqueda avanzada.
