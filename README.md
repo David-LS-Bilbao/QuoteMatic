@@ -2,9 +2,9 @@
 
 QuoteMatic es una aplicación backend con minifront en EJS que recomienda frases según la situación del usuario, el tipo de frase y el rango de edad declarado.
 
-Estado actual: **Sprint 06 completado — Autorización admin + hardening MVP**.
+Estado actual: **Sprint 07 completado — Swagger / OpenAPI para la API REST**.
 
-Sprint 06 cierra el MVP backend conectando roles reales con el CRUD de `Quote`: lecturas públicas, favoritos protegidos por sesión y escritura de frases reservada a admin.
+Sprint 07 añade documentación interactiva Swagger/OpenAPI para la API existente. El MVP backend mantiene lecturas públicas, favoritos protegidos por sesión y escritura de frases reservada a admin.
 
 ## Enfoque Actual del MVP
 
@@ -28,6 +28,7 @@ Las vistas EJS son mínimas y funcionan como apoyo visual. El valor principal de
 - express-session para sesiones
 - connect-mongo para persistir sesiones en MongoDB
 - Docker Compose para MongoDB local
+- swagger-jsdoc y swagger-ui-express para documentación OpenAPI
 - `tsx` para ejecución TypeScript en desarrollo y seed
 
 ## Requisitos
@@ -134,6 +135,8 @@ npm start
 
 - `GET /` - landing inicial renderizada con EJS.
 - `GET /health` - endpoint de salud del servidor.
+- `GET /api-docs` - documentación Swagger UI.
+- `GET /api-docs.json` - especificación OpenAPI en JSON.
 
 ### Auth
 
@@ -184,6 +187,45 @@ Rutas inexistentes bajo `/api/*` devuelven JSON:
   "message": "API route not found"
 }
 ```
+
+## Documentación Swagger / OpenAPI
+
+Sprint 07 añade documentación interactiva de la API usando Swagger/OpenAPI.
+
+URLs locales:
+
+```text
+http://localhost:3000/api-docs
+http://localhost:3000/api-docs.json
+```
+
+Para probarlo:
+
+```bash
+docker compose up -d
+npm run seed
+npm run dev
+```
+
+Después abre en el navegador:
+
+```text
+http://localhost:3000/api-docs
+```
+
+También puedes inspeccionar la especificación JSON:
+
+```bash
+curl http://localhost:3000/api-docs.json
+```
+
+Notas:
+
+- Swagger documenta los endpoints principales del MVP.
+- Los endpoints protegidos requieren login y cookie de sesión.
+- `POST /api/quotes`, `PUT /api/quotes/:id` y `DELETE /api/quotes/:id` requieren rol `admin`.
+- La app usa sesión/cookie (`connect.sid`), no JWT.
+- La documentación es suficiente para demo y revisión de bootcamp; no busca ser una especificación enterprise completa.
 
 ## Flujo de Prueba Completo
 
@@ -522,7 +564,7 @@ curl -X POST http://localhost:3000/api/favorites/QUOTE_ID
 curl -X DELETE http://localhost:3000/api/favorites/QUOTE_ID
 ```
 
-## Validaciones de Sprint 06
+## Validaciones de Sprint 07
 
 Comandos recomendados antes de cerrar cambios:
 
@@ -536,6 +578,8 @@ npm run dev
 
 Validaciones principales:
 
+- `GET /api-docs` muestra Swagger UI.
+- `GET /api-docs.json` devuelve OpenAPI JSON.
 - `GET /api/quotes` devuelve 200 sin login.
 - `GET /api/quotes/random` devuelve 200 sin login.
 - `GET /api/authors` devuelve 200 sin login.
@@ -658,10 +702,14 @@ QuoteMatic/
 │       ├── SPRINT_05_FAVORITES_REPORT.md
 │       ├── SPRINT_06_ADMIN_PROTECTION_REPORT.md
 │       ├── SPRINT_06_QA_CHECKLIST.md
-│       └── SPRINT_06_NEXT_STEPS.md
+│       ├── SPRINT_06_NEXT_STEPS.md
+│       ├── SPRINT_07_SWAGGER_REPORT.md
+│       ├── SPRINT_07_QA_CHECKLIST.md
+│       └── SPRINT_07_NEXT_STEPS.md
 ├── src/
 │   ├── config/
-│   │   └── database.ts
+│   │   ├── database.ts
+│   │   └── swagger.ts
 │   ├── controllers/
 │   ├── middlewares/
 │   ├── models/
@@ -715,9 +763,15 @@ Sprint 06:
 - `docs/sprints/SPRINT_06_QA_CHECKLIST.md`
 - `docs/sprints/SPRINT_06_NEXT_STEPS.md`
 
+Sprint 07:
+
+- `docs/sprints/SPRINT_07_SWAGGER_REPORT.md`
+- `docs/sprints/SPRINT_07_QA_CHECKLIST.md`
+- `docs/sprints/SPRINT_07_NEXT_STEPS.md`
+
 ## Flujo Git
 
-- Rama de trabajo del Sprint 06: `feat/admin-protected-quotes`.
+- Rama de trabajo del Sprint 07: `feat/swagger-openapi-docs`.
 - Rama destino: `dev`.
 - `main` queda como rama estable.
 - El flujo recomendado es trabajar por ramas `feat/*`, validar localmente y abrir PR hacia `dev`.
@@ -743,6 +797,7 @@ Commits pequeños y descriptivos:
 feat(auth): add register flow
 feat(favorites): add protected favorites api
 feat(auth): protect quote write endpoints with admin role
+feat(docs): add swagger openapi setup
 docs(sprint): add sprint 06 admin protection documentation
 ```
 
@@ -754,6 +809,7 @@ docs(sprint): add sprint 06 admin protection documentation
 - Sprint 04: autenticación, sesiones, roles y age gate. Completado.
 - Sprint 05: favoritos funcionales, rutas protegidas y polish mínimo. Completado.
 - Sprint 06: protección admin para escritura de quotes y hardening MVP. Completado.
+- Sprint 07: documentación Swagger/OpenAPI para la API REST. Completado.
 
 ## Fuera de Alcance Actual
 
