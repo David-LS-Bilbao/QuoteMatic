@@ -8,6 +8,8 @@ import indexRoutes from "./routes/index.routes";
 import quoteApiRoutes from "./routes/api/quoteApi.routes";
 import catalogApiRoutes from "./routes/api/catalogApi.routes";
 
+import authRoutes from "./routes/auth.routes";
+
 const app = express();
 
 app.set("view engine", "ejs");
@@ -47,6 +49,7 @@ app.use(
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRoutes);
+app.use("/auth", authRoutes);
 app.use("/health", healthRoutes);
 
 app.use("/api/quotes", quoteApiRoutes);
