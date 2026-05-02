@@ -1,8 +1,12 @@
 import { Router } from "express";
+import { isAuthenticated } from "../middlewares/auth.middleware";
+import { isAdmin } from "../middlewares/role.middleware";
+
 
 import {
   login,
   logout,
+  adminCheck,
   me,
   register,
   showLoginForm,
@@ -19,6 +23,8 @@ router.post("/login", login);
 
 router.post("/logout", logout);
 
-router.get("/me", me);
+router.get("/admin-check", isAuthenticated, isAdmin, adminCheck);
+
+router.get("/me", isAuthenticated, me);
 
 export default router;
