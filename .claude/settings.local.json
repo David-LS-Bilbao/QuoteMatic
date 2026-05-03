@@ -5,7 +5,8 @@
       "Bash(npm run *)",
       "Bash(./node_modules/.bin/tsc --noEmit)",
       "Bash(cp -r src/views dist/views)",
-      "Bash(cp -r src/public dist/public)"
+      "Bash(cp -r src/public dist/public)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\David\\\\OneDrive\\\\Desktop\\\\GIT proyects\\\\QuoteMatic\\\\src\\\\controllers\\\\\" | Select-Object Name)"
     ]
   }
 }
