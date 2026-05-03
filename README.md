@@ -114,8 +114,6 @@ npm run seed:admin
 npm run dev
 ```
 
-`npm run import:quotes` es opcional (ver sección "Importación opcional de frases").
-
 ### Credenciales de demo
 
 | Campo    | Valor                      |
@@ -129,71 +127,6 @@ npm run dev
 El script `npm run seed:admin` es idempotente: ejecutarlo varias veces actualiza el usuario existente sin crear duplicados.
 
 ---
-
-## Importación opcional de frases
-
-El proyecto incluye un script para enriquecer la base de datos con frases reales en inglés desde una API pública.
-
-### Fuente
-
-**Quotable API** — `https://api.quotable.io`
-
-API pública y gratuita, sin clave de autenticación.
-
-### Comando
-
-```bash
-npm run import:quotes
-```
-
-### Comportamiento
-
-1. Conecta a MongoDB usando `MONGODB_URI`.
-2. Descarga hasta **30 frases** desde Quotable API.
-3. Por cada frase, busca o crea el autor en la colección `Author`.
-4. Asigna un `QuoteType` según los tags de Quotable (fallback: `wise_advice`).
-5. Distribuye las frases entre las situaciones existentes mediante rotación.
-6. **Evita duplicados** comprobando `textNormalized + author` antes de insertar.
-7. Guarda la referencia externa en `sourceReference` con formato `quotable:<id>`.
-8. Cierra la conexión y muestra un resumen.
-
-### Requisitos previos
-
-El seed debe haberse ejecutado antes:
-
-```bash
-npm run seed
-npm run import:quotes
-```
-
-### Metadatos de frases importadas
-
-| Campo               | Valor                    |
-|---------------------|--------------------------|
-| `language`          | `"en"`                   |
-| `contentRating`     | `"all"`                  |
-| `verificationStatus`| `"pending"`              |
-| `sourceType`        | `"unknown"`              |
-| `sourceReference`   | `"quotable:<id>"`        |
-| `isActive`          | `true`                   |
-
-### Metadatos de autores importados
-
-| Campo                | Valor          |
-|----------------------|----------------|
-| `authorType`         | `"real"`       |
-| `verificationStatus` | `"pending"`    |
-| `verificationSource` | `"quotable"`   |
-| `isVerified`         | `false`        |
-
-### Notas importantes
-
-- MongoDB es la fuente principal de datos. Este script es un enriquecimiento opcional.
-- Las frases importadas quedan con `verificationStatus: "pending"`. No se marcan como verificadas automáticamente.
-- **No se llama a ninguna API externa durante el uso normal del usuario** (dashboard, favoritos, etc.).
-- Si la Quotable API no está disponible, el script falla con mensaje claro y no modifica la DB.
-- Ejecutar el script varias veces es seguro: los duplicados se detectan y omiten.
-- El límite de 30 frases es intencional para mantener el dataset controlado.
 
 ## Ejecutar en Desarrollo
 
@@ -734,7 +667,6 @@ Validaciones principales:
 - `npm start` - ejecuta `dist/server.js`.
 - `npm run seed` - ejecuta el seed inicial con `tsx src/seeds/seed.ts`.
 - `npm run seed:admin` - crea o actualiza el usuario admin de demo (idempotente).
-- `npm run import:quotes` - importa hasta 30 frases desde Quotable API (opcional, requiere seed previo).
 - `npm run clean` - elimina `dist`.
 - `npm run copy:views` - copia `src/views` a `dist/views`.
 - `npm run copy:public` - copia `src/public` a `dist/public`.
@@ -969,3 +901,7 @@ QuoteMatic todavía no implementa:
 - JWT.
 - Configuración productiva completa de cookies.
 - Tests automatizados complejos.
+
+## Mejoras Futuras
+
+- Importación desde APIs externas como Quotable.

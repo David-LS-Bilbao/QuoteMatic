@@ -446,82 +446,6 @@ textarea {
   user-select: none;
 }
 
-.import-search-form {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 1rem;
-  align-items: end;
-  margin-top: 1rem;
-}
-
-.import-results {
-  display: grid;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-}
-
-.import-card {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 1rem;
-  background: var(--surface-soft);
-  flex-wrap: wrap;
-}
-
-.import-card-info {
-  display: grid;
-  gap: 0.3rem;
-}
-
-.import-card-info p {
-  margin: 0;
-  font-size: 0.9rem;
-}
-
-.import-save-form {
-  display: flex;
-  align-items: flex-start;
-  flex-shrink: 0;
-}
-
-.import-quote-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0.9rem 1rem;
-  background: var(--surface-soft);
-  cursor: pointer;
-  color: var(--text);
-  font-weight: normal;
-}
-
-.import-quote-item:hover {
-  border-color: rgba(56, 189, 248, 0.4);
-}
-
-.import-quote-item input[type="checkbox"] {
-  width: auto;
-  margin-top: 0.2rem;
-  accent-color: var(--accent);
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-.import-summary p {
-  margin: 0 0 0.5rem;
-}
-
-.import-summary ul {
-  margin: 0.25rem 0 0.5rem 1.25rem;
-  font-size: 0.88rem;
-}
-
 @media (max-width: 720px) {
   .site-header {
     align-items: flex-start;
@@ -540,10 +464,6 @@ textarea {
   .button,
   button {
     width: 100%;
-  }
-
-  .import-search-form {
-    grid-template-columns: 1fr;
   }
 
   .td-text {
