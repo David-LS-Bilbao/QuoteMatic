@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <%- include('../partials/admin-nav') %>
+
+  <main class="page-shell">
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Gestión de contenido</p>
+          <h1>Autores</h1>
+        </div>
+        <div class="button-row">
+          <a class="button primary" href="/admin/authors/new">+ Nuevo autor</a>
+          
+        </div>
+      </div>
+      <% if (msg) { %>
+        <p class="status-message" data-type="success"><%= msg %></p>
+      <% } %>
+    </section>
+
+    <section class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Tipo</th>
+              <th>Obra</th>
+              <th>Verificación</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% authors.forEach(function(author) { %>
+              <tr class="<%= !author.isActive ? 'row-inactive' : '' %>">
+                <td><%= author.name %></td>
+                <td><span class="badge"><%= author.authorType %></span></td>
+                <td><%= author.sourceWork || '—' %></td>
+                <td><span class="badge"><%= author.verificationStatus %></span></td>
+                <td>
+                  <span class="badge <%= author.isActive ? 'badge-active' : 'badge-inactive' %>">
+                    <%= author.isActive ? 'activo' : 'inactivo' %>
+                  </span>
+                </td>
+                <td class="td-actions">
+                  <a class="button small" href="/admin/authors/<%= author._id %>/edit">Editar</a>
+                  <% if (author.isActive) { %>
+                    <form method="POST" action="/admin/authors/<%= author._id %>/delete" class="inline-form">
+                      <button class="button small danger" type="submit"
+                        onclick="return confirm('¿Desactivar este autor?')">Desactivar</button>
+                    </form>
+                  <% } %>
+                </td>
+              </tr>
+            <% }); %>
+            <% if (authors.length === 0) { %>
+              <tr>
+                <td colspan="6" class="muted" style="text-align:center;padding:2rem;">
+                  No hay autores todavía. <a href="/admin/authors/new">Crear el primero</a>.
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

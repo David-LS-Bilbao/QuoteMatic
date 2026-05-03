@@ -205,6 +205,24 @@ if (contentRating !== undefined) {
       filter.quoteType = quoteType._id;
     }
 
+    // situation llega como slug; se resuelve a ObjectId antes de filtrar Quote.
+    if (typeof req.query.situation === "string") {
+      const situation = await Situation.findOne({
+        slug: req.query.situation,
+        isActive: true,
+      });
+
+      if (!situation) {
+        res.status(404).json({
+          success: false,
+          message: "Situation not found",
+        });
+        return;
+      }
+
+      filter.situation = situation._id;
+    }
+
     // Primero se cuenta el total para poder elegir una posicion aleatoria valida.
     const totalQuotes = await Quote.countDocuments(filter);
 

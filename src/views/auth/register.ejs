@@ -7,29 +7,36 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
+  <header class="site-header">
+    <a class="brand" href="/">QuoteMatic</a>
+    <nav class="nav-links" aria-label="Navegación principal">
+      <a class="button nav-button primary" href="/auth/login">Entrar</a>
+    </nav>
+  </header>
+
   <main class="landing">
-    <section class="card">
+    <section class="card auth-card">
       <p class="eyebrow">QuoteMatic Auth</p>
       <h1>Crear cuenta</h1>
 
       <% if (error) { %>
-        <p><%= error %></p>
+        <p class="error-message"><%= error %></p>
       <% } %>
 
       <form method="POST" action="/auth/register">
         <div>
           <label for="name">Nombre</label>
-          <input id="name" name="name" type="text" required />
+          <input id="name" name="name" type="text" required autocomplete="name" />
         </div>
 
         <div>
           <label for="email">Email</label>
-          <input id="email" name="email" type="email" required />
+          <input id="email" name="email" type="email" required autocomplete="email" />
         </div>
 
         <div>
           <label for="password">Contraseña</label>
-          <input id="password" name="password" type="password" required />
+          <input id="password" name="password" type="password" required autocomplete="new-password" />
         </div>
 
         <div>
@@ -42,12 +49,10 @@
           </select>
         </div>
 
-        <button type="submit">Registrarme</button>
+        <button class="button primary" type="submit">Registrarme</button>
       </form>
 
-      <div class="actions">
-        <a href="/">Volver al inicio</a>
-      </div>
+      <p class="auth-hint">¿Ya tienes cuenta? <a href="/auth/login">Iniciar sesión</a></p>
     </section>
   </main>
 </body>

@@ -285,16 +285,6 @@ POST   /admin/authors/:id/update
 POST   /admin/authors/:id/delete
 ```
 
-### Bonus importación
-
-```txt
-GET    /admin/import
-POST   /admin/import/search
-POST   /admin/import/save
-POST   /admin/import/:id/accept
-POST   /admin/import/:id/reject
-```
-
 ---
 
 ## 11. Variables de entorno
