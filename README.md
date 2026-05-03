@@ -2,9 +2,9 @@
 
 QuoteMatic es una aplicación backend con minifront en EJS que recomienda frases según la situación del usuario, el tipo de frase y el rango de edad declarado.
 
-Estado actual: **Sprint 07 completado — Swagger / OpenAPI para la API REST**.
+Estado actual: **Sprint 08 completado — Interfaz EJS responsive funcional**.
 
-Sprint 07 añade documentación interactiva Swagger/OpenAPI para la API existente. El MVP backend mantiene lecturas públicas, favoritos protegidos por sesión y escritura de frases reservada a admin.
+Sprint 08 añade una interfaz visual sencilla para demo desde navegador y móvil. El MVP backend mantiene lecturas públicas, favoritos protegidos por sesión, escritura de frases reservada a admin y documentación Swagger.
 
 ## Enfoque Actual del MVP
 
@@ -14,7 +14,7 @@ QuoteMatic se mantiene como un proyecto backend pequeño y centrado en demostrar
 MongoDB + Mongoose + Seed + API REST simple + CRUD mínimo + Auth + Favoritos + Autorización admin
 ```
 
-Las vistas EJS son mínimas y funcionan como apoyo visual. El valor principal del MVP está en levantar MongoDB, ejecutar el seed, probar endpoints REST sobre datos reales y demostrar sesiones, favoritos y autorización básica por rol.
+Las vistas EJS son funcionales y sirven como apoyo visual para demo. El valor principal del MVP sigue estando en levantar MongoDB, ejecutar el seed, probar endpoints REST sobre datos reales y demostrar sesiones, favoritos y autorización básica por rol.
 
 ## Stack
 
@@ -103,6 +103,98 @@ Si `npm run seed` falla con `listen ENOTSUP` o `EPERM`, usar:
 TMPDIR=/tmp TEMP=/tmp TMP=/tmp npm run seed
 ```
 
+## Flujo de demo recomendado
+
+Secuencia completa para preparar el entorno antes de una demo:
+
+```bash
+docker compose up -d
+npm run seed
+npm run seed:admin
+npm run dev
+```
+
+`npm run import:quotes` es opcional (ver sección "Importación opcional de frases").
+
+### Credenciales de demo
+
+| Campo    | Valor                      |
+|----------|----------------------------|
+| Email    | `admin@quotematic.local`   |
+| Password | `Admin123!`                |
+| Rol      | `admin`                    |
+
+**ADVERTENCIA:** Estas credenciales son solo para desarrollo y demo local. No usar en producción.
+
+El script `npm run seed:admin` es idempotente: ejecutarlo varias veces actualiza el usuario existente sin crear duplicados.
+
+---
+
+## Importación opcional de frases
+
+El proyecto incluye un script para enriquecer la base de datos con frases reales en inglés desde una API pública.
+
+### Fuente
+
+**Quotable API** — `https://api.quotable.io`
+
+API pública y gratuita, sin clave de autenticación.
+
+### Comando
+
+```bash
+npm run import:quotes
+```
+
+### Comportamiento
+
+1. Conecta a MongoDB usando `MONGODB_URI`.
+2. Descarga hasta **30 frases** desde Quotable API.
+3. Por cada frase, busca o crea el autor en la colección `Author`.
+4. Asigna un `QuoteType` según los tags de Quotable (fallback: `wise_advice`).
+5. Distribuye las frases entre las situaciones existentes mediante rotación.
+6. **Evita duplicados** comprobando `textNormalized + author` antes de insertar.
+7. Guarda la referencia externa en `sourceReference` con formato `quotable:<id>`.
+8. Cierra la conexión y muestra un resumen.
+
+### Requisitos previos
+
+El seed debe haberse ejecutado antes:
+
+```bash
+npm run seed
+npm run import:quotes
+```
+
+### Metadatos de frases importadas
+
+| Campo               | Valor                    |
+|---------------------|--------------------------|
+| `language`          | `"en"`                   |
+| `contentRating`     | `"all"`                  |
+| `verificationStatus`| `"pending"`              |
+| `sourceType`        | `"unknown"`              |
+| `sourceReference`   | `"quotable:<id>"`        |
+| `isActive`          | `true`                   |
+
+### Metadatos de autores importados
+
+| Campo                | Valor          |
+|----------------------|----------------|
+| `authorType`         | `"real"`       |
+| `verificationStatus` | `"pending"`    |
+| `verificationSource` | `"quotable"`   |
+| `isVerified`         | `false`        |
+
+### Notas importantes
+
+- MongoDB es la fuente principal de datos. Este script es un enriquecimiento opcional.
+- Las frases importadas quedan con `verificationStatus: "pending"`. No se marcan como verificadas automáticamente.
+- **No se llama a ninguna API externa durante el uso normal del usuario** (dashboard, favoritos, etc.).
+- Si la Quotable API no está disponible, el script falla con mensaje claro y no modifica la DB.
+- Ejecutar el script varias veces es seguro: los duplicados se detectan y omiten.
+- El límite de 30 frases es intencional para mantener el dataset controlado.
+
 ## Ejecutar en Desarrollo
 
 ```bash
@@ -134,6 +226,9 @@ npm start
 ### Base
 
 - `GET /` - landing inicial renderizada con EJS.
+- `GET /dashboard` - dashboard visual para pedir frases y guardar favoritos.
+- `GET /favorites` - favoritos del usuario autenticado.
+- `GET /admin` - panel admin mínimo.
 - `GET /health` - endpoint de salud del servidor.
 - `GET /api-docs` - documentación Swagger UI.
 - `GET /api-docs.json` - especificación OpenAPI en JSON.
@@ -278,6 +373,41 @@ curl http://localhost:3000/api/quote-types
 curl http://localhost:3000/api/quotes
 curl http://localhost:3000/api/quotes/random
 ```
+
+## Uso desde navegador
+
+Sprint 08 permite usar QuoteMatic desde páginas EJS responsive.
+
+Rutas visuales disponibles:
+
+- `http://localhost:3000/`
+- `http://localhost:3000/dashboard`
+- `http://localhost:3000/auth/register`
+- `http://localhost:3000/auth/login`
+- `http://localhost:3000/favorites`
+- `http://localhost:3000/admin`
+- `http://localhost:3000/api-docs`
+
+Flujo demo recomendado:
+
+1. Abrir `/`.
+2. Crear cuenta en `/auth/register`.
+3. Iniciar sesión en `/auth/login`.
+4. Ir a `/dashboard`.
+5. Pedir una frase aleatoria.
+6. Guardar la frase como favorita.
+7. Ir a `/favorites`.
+8. Quitar un favorito.
+9. Abrir `/api-docs` para ver Swagger.
+10. Si el usuario tiene rol admin, entrar a `/admin`.
+
+Notas:
+
+- El dashboard es público para pedir frases aleatorias.
+- Guardar favoritos requiere sesión.
+- `/favorites` requiere sesión.
+- `/admin` requiere rol `admin`.
+- Swagger sigue disponible en `/api-docs`.
 
 ## Autenticación y Sesiones
 
@@ -603,6 +733,8 @@ Validaciones principales:
 - `npm run build` - limpia `dist`, compila TypeScript y copia vistas/assets.
 - `npm start` - ejecuta `dist/server.js`.
 - `npm run seed` - ejecuta el seed inicial con `tsx src/seeds/seed.ts`.
+- `npm run seed:admin` - crea o actualiza el usuario admin de demo (idempotente).
+- `npm run import:quotes` - importa hasta 30 frases desde Quotable API (opcional, requiere seed previo).
 - `npm run clean` - elimina `dist`.
 - `npm run copy:views` - copia `src/views` a `dist/views`.
 - `npm run copy:public` - copia `src/public` a `dist/public`.
@@ -705,7 +837,10 @@ QuoteMatic/
 │       ├── SPRINT_06_NEXT_STEPS.md
 │       ├── SPRINT_07_SWAGGER_REPORT.md
 │       ├── SPRINT_07_QA_CHECKLIST.md
-│       └── SPRINT_07_NEXT_STEPS.md
+│       ├── SPRINT_07_NEXT_STEPS.md
+│       ├── SPRINT_08_UI_REPORT.md
+│       ├── SPRINT_08_QA_CHECKLIST.md
+│       └── SPRINT_08_NEXT_STEPS.md
 ├── src/
 │   ├── config/
 │   │   ├── database.ts
@@ -714,6 +849,8 @@ QuoteMatic/
 │   ├── middlewares/
 │   ├── models/
 │   ├── public/
+│   │   ├── app.js
+│   │   └── styles.css
 │   ├── routes/
 │   ├── seeds/
 │   ├── types/
@@ -769,9 +906,15 @@ Sprint 07:
 - `docs/sprints/SPRINT_07_QA_CHECKLIST.md`
 - `docs/sprints/SPRINT_07_NEXT_STEPS.md`
 
+Sprint 08:
+
+- `docs/sprints/SPRINT_08_UI_REPORT.md`
+- `docs/sprints/SPRINT_08_QA_CHECKLIST.md`
+- `docs/sprints/SPRINT_08_NEXT_STEPS.md`
+
 ## Flujo Git
 
-- Rama de trabajo del Sprint 07: `feat/swagger-openapi-docs`.
+- Rama de trabajo del Sprint 08: `feat/ejs-responsive-ui`.
 - Rama destino: `dev`.
 - `main` queda como rama estable.
 - El flujo recomendado es trabajar por ramas `feat/*`, validar localmente y abrir PR hacia `dev`.
@@ -798,6 +941,7 @@ feat(auth): add register flow
 feat(favorites): add protected favorites api
 feat(auth): protect quote write endpoints with admin role
 feat(docs): add swagger openapi setup
+feat(ui): add responsive ejs demo interface
 docs(sprint): add sprint 06 admin protection documentation
 ```
 
@@ -810,15 +954,14 @@ docs(sprint): add sprint 06 admin protection documentation
 - Sprint 05: favoritos funcionales, rutas protegidas y polish mínimo. Completado.
 - Sprint 06: protección admin para escritura de quotes y hardening MVP. Completado.
 - Sprint 07: documentación Swagger/OpenAPI para la API REST. Completado.
+- Sprint 08: interfaz EJS responsive funcional para demo. Completado.
 
 ## Fuera de Alcance Actual
 
 QuoteMatic todavía no implementa:
 
-- Dashboard.
 - Paginación.
 - Búsqueda avanzada.
-- APIs externas.
 - Panel admin complejo.
 - Recuperación de contraseña.
 - Verificación de email.

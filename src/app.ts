@@ -9,6 +9,8 @@ import catalogApiRoutes from "./routes/api/catalogApi.routes";
 import authRoutes from "./routes/auth.routes";
 import favoriteApiRoutes from "./routes/api/favoriteApi.routes";
 import docsRoutes from "./routes/docs.routes";
+import webRoutes from "./routes/web.routes";
+import adminRoutes from "./routes/admin.routes";
 
 const app = express();
 
@@ -49,6 +51,8 @@ app.use(
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRoutes);
+app.use("/", webRoutes);
+app.use("/admin", adminRoutes);
 app.use("/", docsRoutes);
 app.use("/auth", authRoutes);
 app.use("/health", healthRoutes);
