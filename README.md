@@ -81,17 +81,30 @@ Ejecutar seed:
 npm run seed
 ```
 
+El seed borra y recrea los datos de demo desde cero. No requiere intervención manual.
+
 El seed:
 
 - Conecta usando `MONGODB_URI`.
-- Limpia colecciones antes de insertar datos.
-- Inserta 4 autores.
+- Limpia colecciones antes de insertar datos (incluidos favoritos).
+- Inserta 14 autores.
 - Inserta 4 situaciones.
 - Inserta 8 tipos de frase.
-- Inserta 12 frases.
-- Valida referencias internas antes de insertar frases.
+- Inserta 65 frases cubriendo las 32 combinaciones situación × tipo con mínimo 2 frases por combinación.
+- Valida referencias internas antes de insertar (falla antes de insertar datos parciales).
+- Imprime un resumen de cobertura al terminar.
 - No crea usuarios por defecto.
 - No crea usuarios admin por defecto.
+
+### Dataset de frases
+
+El seed incluye tres tipos de frases:
+
+- **Frases históricas verificables**: atribuidas a su autor real con `sourceReference` concreto (Marco Aurelio, Séneca, Epicteto, Nietzsche, Oscar Wilde, Cervantes, Camus).
+- **Frases ficticias conocidas**: atribuidas a su personaje de origen (Yoda, Homer Simpson, Gandalf).
+- **Frases de demo**: atribuidas explícitamente a `Anónimo`, `QuoteMatic`, `Claude` o `Codex` para no simular atribuciones reales. No se inventan frases bajo el nombre de ninguna persona real.
+
+No hay importación desde APIs externas en el MVP actual.
 
 ### Nota WSL
 
