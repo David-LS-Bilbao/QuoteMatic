@@ -87,10 +87,10 @@ El seed:
 
 - Conecta usando `MONGODB_URI`.
 - Limpia colecciones antes de insertar datos (incluidos favoritos).
-- Inserta 14 autores.
+- Inserta 13 autores.
 - Inserta 4 situaciones.
 - Inserta 8 tipos de frase.
-- Inserta 65 frases cubriendo las 32 combinaciones situación × tipo con mínimo 2 frases por combinación.
+- Inserta 156 frases cubriendo las 32 combinaciones situación × tipo.
 - Valida referencias internas antes de insertar (falla antes de insertar datos parciales).
 - Imprime un resumen de cobertura al terminar.
 - No crea usuarios por defecto.
@@ -174,10 +174,32 @@ npm start
 - `GET /` - landing inicial renderizada con EJS.
 - `GET /dashboard` - dashboard visual para pedir frases y guardar favoritos.
 - `GET /favorites` - favoritos del usuario autenticado.
-- `GET /admin` - panel admin mínimo.
+- `GET /admin` - panel admin principal.
 - `GET /health` - endpoint de salud del servidor.
 - `GET /api-docs` - documentación Swagger UI.
 - `GET /api-docs.json` - especificación OpenAPI en JSON.
+
+### Admin Web (requieren sesión y rol `admin`)
+
+Rutas montadas bajo `/admin`:
+
+Gestión de frases:
+
+- `GET /admin/quotes` - lista de frases.
+- `GET /admin/quotes/new` - formulario de nueva frase.
+- `POST /admin/quotes` - crear frase.
+- `GET /admin/quotes/:id/edit` - formulario de edición de frase.
+- `POST /admin/quotes/:id/update` - actualizar frase.
+- `POST /admin/quotes/:id/delete` - borrado lógico de frase.
+
+Gestión de autores:
+
+- `GET /admin/authors` - lista de autores.
+- `GET /admin/authors/new` - formulario de nuevo autor.
+- `POST /admin/authors` - crear autor.
+- `GET /admin/authors/:id/edit` - formulario de edición de autor.
+- `POST /admin/authors/:id/update` - actualizar autor.
+- `POST /admin/authors/:id/delete` - borrado lógico de autor.
 
 ### Auth
 
@@ -332,6 +354,8 @@ Rutas visuales disponibles:
 - `http://localhost:3000/auth/login`
 - `http://localhost:3000/favorites`
 - `http://localhost:3000/admin`
+- `http://localhost:3000/admin/quotes`
+- `http://localhost:3000/admin/authors`
 - `http://localhost:3000/api-docs`
 
 Flujo demo recomendado:
@@ -791,15 +815,48 @@ QuoteMatic/
 │   │   ├── database.ts
 │   │   └── swagger.ts
 │   ├── controllers/
+│   │   ├── api/
+│   │   │   ├── catalogApi.controller.ts
+│   │   │   ├── favoriteApi.controller.ts
+│   │   │   └── quoteApi.controller.ts
+│   │   ├── web/
+│   │   │   ├── adminAuthor.controller.ts
+│   │   │   ├── adminPage.controller.ts
+│   │   │   ├── adminQuote.controller.ts
+│   │   │   ├── dashboard.controller.ts
+│   │   │   └── favoritesPage.controller.ts
+│   │   ├── auth.controller.ts
+│   │   ├── health.controller.ts
+│   │   └── home.controller.ts
 │   ├── middlewares/
+│   │   ├── auth.middleware.ts
+│   │   ├── role.middleware.ts
+│   │   └── webAdmin.middleware.ts
 │   ├── models/
 │   ├── public/
 │   │   ├── app.js
 │   │   └── styles.css
 │   ├── routes/
 │   ├── seeds/
+│   │   ├── seed.ts
+│   │   └── seedAdmin.ts
 │   ├── types/
 │   ├── views/
+│   │   ├── admin/
+│   │   │   ├── author-form.ejs
+│   │   │   ├── authors.ejs
+│   │   │   ├── quote-form.ejs
+│   │   │   └── quotes.ejs
+│   │   ├── auth/
+│   │   │   ├── login.ejs
+│   │   │   └── register.ejs
+│   │   ├── partials/
+│   │   │   ├── admin-nav.ejs
+│   │   │   └── admin-subnav.ejs
+│   │   ├── admin.ejs
+│   │   ├── dashboard.ejs
+│   │   ├── favorites.ejs
+│   │   └── index.ejs
 │   ├── app.ts
 │   └── server.ts
 ├── .env.example
