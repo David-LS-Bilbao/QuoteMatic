@@ -92,6 +92,13 @@
           <a class="button" href="/admin/authors">Cancelar</a>
         </div>
       </form>
+
+      <% if (author && author._id) { %>
+        <div class="author-quick-links">
+          <a class="button" href="/admin/authors/<%= author._id %>/quotes">Ver frases de este autor</a>
+          <a class="button primary" href="/admin/quotes/new?authorName=<%= encodeURIComponent(author.name) %>">+ Añadir frase para este autor</a>
+        </div>
+      <% } %>
     </section>
   </main>
 </body>

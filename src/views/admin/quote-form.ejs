@@ -30,7 +30,7 @@
           <label>
             Autor
             <input type="text" name="author" required
-              value="<%= quote ? (quote.author && quote.author.name ? quote.author.name : quote.author || '') : '' %>"
+              value="<%= quote ? (quote.author && quote.author.name ? quote.author.name : quote.author || '') : (prefillAuthor || '') %>"
               placeholder="Ej: Séneca, Yoda, Marco Aurelio..." />
           </label>
 

@@ -480,3 +480,12 @@ textarea {
     width: auto;
   }
 }
+
+.author-quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}

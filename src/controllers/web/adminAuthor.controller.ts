@@ -2,6 +2,9 @@ import { Request, Response } from "express";
 import mongoose from "mongoose";
 
 import { Author } from "../../models/Author";
+import { Quote } from "../../models/Quote";
+import { QuoteType } from "../../models/QuoteType";
+import { Situation } from "../../models/Situation";
 import {
   AUTHOR_TYPES,
   SOURCE_TYPES,
@@ -10,6 +13,11 @@ import {
   type SourceType,
   type VerificationStatus,
 } from "../../types/domain.types";
+
+const quotePopulate = [
+  { path: "situation", model: Situation, select: "name slug isActive" },
+  { path: "quoteType", model: QuoteType, select: "name slug isActive" },
+];
 
 const normalizeText = (value: string): string =>
   value.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -171,4 +179,33 @@ export const deleteAdminAuthor = async (req: Request, res: Response): Promise<vo
   }
 
   res.redirect("/admin/authors?msg=Autor+desactivado.");
+};
+
+export const listAuthorQuotes = async (req: Request, res: Response): Promise<void> => {
+  const id = String(req.params.id);
+
+  if (!isValidMongoId(id)) {
+    res.redirect("/admin/authors");
+    return;
+  }
+
+  const author = await Author.findById(id).lean();
+
+  if (!author || !author.isActive) {
+    res.redirect("/admin/authors?msg=Autor+no+encontrado+o+inactivo.");
+    return;
+  }
+
+  const quotes = await Quote.find({ author: id })
+    .populate(quotePopulate)
+    .sort({ updatedAt: -1 })
+    .lean();
+
+  res.render("admin/author-quotes", {
+    title: `Frases de ${author.name} | Admin | QuoteMatic`,
+    author,
+    quotes,
+    msg: req.query.msg ?? null,
+    user: getUser(req),
+  });
 };

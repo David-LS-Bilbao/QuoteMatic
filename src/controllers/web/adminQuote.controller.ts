@@ -78,10 +78,12 @@ export const listAdminQuotes = async (req: Request, res: Response): Promise<void
 
 export const newAdminQuoteForm = async (req: Request, res: Response): Promise<void> => {
   const catalogs = await loadFormCatalogs();
+  const prefillAuthor = typeof req.query.authorName === "string" ? req.query.authorName : "";
 
   res.render("admin/quote-form", {
     title: "Nueva frase | Admin | QuoteMatic",
     quote: null,
+    prefillAuthor,
     ...catalogs,
     contentRatings: CONTENT_RATINGS,
     verificationStatuses: VERIFICATION_STATUSES,
@@ -100,6 +102,7 @@ export const createAdminQuote = async (req: Request, res: Response): Promise<voi
     res.status(400).render("admin/quote-form", {
       title: "Nueva frase | Admin | QuoteMatic",
       quote: body,
+      prefillAuthor: "",
       ...catalogs,
       contentRatings: CONTENT_RATINGS,
       verificationStatuses: VERIFICATION_STATUSES,
@@ -176,6 +179,7 @@ export const editAdminQuoteForm = async (req: Request, res: Response): Promise<v
   res.render("admin/quote-form", {
     title: "Editar frase | Admin | QuoteMatic",
     quote,
+    prefillAuthor: "",
     ...catalogs,
     contentRatings: CONTENT_RATINGS,
     verificationStatuses: VERIFICATION_STATUSES,
@@ -204,6 +208,7 @@ export const updateAdminQuote = async (req: Request, res: Response): Promise<voi
     res.status(400).render("admin/quote-form", {
       title: "Editar frase | Admin | QuoteMatic",
       quote: { ...originalQuote, ...body, _id: id },
+      prefillAuthor: "",
       ...catalogs,
       contentRatings: CONTENT_RATINGS,
       verificationStatuses: VERIFICATION_STATUSES,

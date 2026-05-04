@@ -5,6 +5,7 @@ import {
   deleteAdminAuthor,
   editAdminAuthorForm,
   listAdminAuthors,
+  listAuthorQuotes,
   newAdminAuthorForm,
   updateAdminAuthor,
 } from "../controllers/web/adminAuthor.controller";
@@ -34,6 +35,7 @@ router.post("/quotes/:id/delete", deleteAdminQuote);
 router.get("/authors", listAdminAuthors);
 router.get("/authors/new", newAdminAuthorForm);
 router.post("/authors", createAdminAuthor);
+router.get("/authors/:id/quotes", listAuthorQuotes);
 router.get("/authors/:id/edit", editAdminAuthorForm);
 router.post("/authors/:id/update", updateAdminAuthor);
 router.post("/authors/:id/delete", deleteAdminAuthor);

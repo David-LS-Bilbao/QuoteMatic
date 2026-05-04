@@ -2,7 +2,7 @@
 
 QuoteMatic es una aplicación backend con minifront en EJS que recomienda frases según la situación del usuario, el tipo de frase y el rango de edad declarado.
 
-Estado actual: **Sprint 08 completado — Interfaz EJS responsive funcional**.
+Estado actual: **Sprint 08 completado — Mejora de navegación admin entre autores y frases**.
 
 Sprint 08 añade una interfaz visual sencilla para demo desde navegador y móvil. El MVP backend mantiene lecturas públicas, favoritos protegidos por sesión, escritura de frases reservada a admin y documentación Swagger.
 
@@ -197,6 +197,7 @@ Gestión de autores:
 - `GET /admin/authors` - lista de autores.
 - `GET /admin/authors/new` - formulario de nuevo autor.
 - `POST /admin/authors` - crear autor.
+- `GET /admin/authors/:id/quotes` - frases de un autor (activas e inactivas).
 - `GET /admin/authors/:id/edit` - formulario de edición de autor.
 - `POST /admin/authors/:id/update` - actualizar autor.
 - `POST /admin/authors/:id/delete` - borrado lógico de autor.
@@ -356,6 +357,7 @@ Rutas visuales disponibles:
 - `http://localhost:3000/admin`
 - `http://localhost:3000/admin/quotes`
 - `http://localhost:3000/admin/authors`
+- `http://localhost:3000/admin/authors/:id/quotes`
 - `http://localhost:3000/api-docs`
 
 Flujo demo recomendado:
@@ -844,6 +846,7 @@ QuoteMatic/
 │   ├── views/
 │   │   ├── admin/
 │   │   │   ├── author-form.ejs
+│   │   │   ├── author-quotes.ejs
 │   │   │   ├── authors.ejs
 │   │   │   ├── quote-form.ejs
 │   │   │   └── quotes.ejs

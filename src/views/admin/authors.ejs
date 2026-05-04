@@ -52,6 +52,7 @@
                   </span>
                 </td>
                 <td class="td-actions">
+                  <a class="button small" href="/admin/authors/<%= author._id %>/quotes">Ver frases</a>
                   <a class="button small" href="/admin/authors/<%= author._id %>/edit">Editar</a>
                   <% if (author.isActive) { %>
                     <form method="POST" action="/admin/authors/<%= author._id %>/delete" class="inline-form">
