@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <%- include('../partials/admin-nav') %>
+
+  <main class="page-shell">
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Frases de autor</p>
+          <h1>Frases de <%= author.name %></h1>
+          <p class="muted" style="margin-top:0.4rem;font-size:0.9rem;">
+            Revisa las frases asociadas a este autor o añade una nueva manualmente.
+          </p>
+        </div>
+        <div class="button-row">
+          <a class="button primary" href="/admin/quotes/new?authorName=<%= encodeURIComponent(author.name) %>">+ Añadir frase</a>
+          <a class="button" href="/admin/authors/<%= author._id %>/edit">Editar autor</a>
+          <a class="button" href="/admin/authors">Autores</a>
+        </div>
+      </div>
+      <% if (msg) { %>
+        <p class="status-message" data-type="success"><%= msg %></p>
+      <% } %>
+    </section>
+
+    <section class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Frase</th>
+              <th>Tipo</th>
+              <th>Situación</th>
+              <th>Rating</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% quotes.forEach(function(quote) { %>
+              <tr class="<%= !quote.isActive ? 'row-inactive' : '' %>">
+                <td class="td-text"><%= quote.text %></td>
+                <td><%= quote.quoteType ? quote.quoteType.name : '—' %></td>
+                <td><%= quote.situation ? quote.situation.name : '—' %></td>
+                <td><span class="badge badge-rating"><%= quote.contentRating %></span></td>
+                <td>
+                  <span class="badge <%= quote.isActive ? 'badge-active' : 'badge-inactive' %>">
+                    <%= quote.isActive ? 'activa' : 'inactiva' %>
+                  </span>
+                </td>
+                <td class="td-actions">
+                  <a class="button small" href="/admin/quotes/<%= quote._id %>/edit">Editar</a>
+                  <% if (quote.isActive) { %>
+                    <form method="POST" action="/admin/quotes/<%= quote._id %>/delete" class="inline-form">
+                      <button class="button small danger" type="submit"
+                        onclick="return confirm('¿Desactivar esta frase?')">Desactivar</button>
+                    </form>
+                  <% } %>
+                </td>
+              </tr>
+            <% }); %>
+            <% if (quotes.length === 0) { %>
+              <tr>
+                <td colspan="6" class="muted" style="text-align:center;padding:2rem;">
+                  No hay frases para este autor todavía.
+                  <a href="/admin/quotes/new?authorName=<%= encodeURIComponent(author.name) %>">Añadir la primera</a>.
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

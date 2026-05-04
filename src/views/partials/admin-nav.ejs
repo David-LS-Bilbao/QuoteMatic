@@ -1,0 +1,13 @@
+<header class="site-header">
+  <a class="brand" href="/">QuoteMatic</a>
+  <nav class="nav-links" aria-label="Navegación principal">
+    <a href="/dashboard">Explorar frases</a>
+    <a href="/favorites">Favoritos</a>
+    <a href="/admin">Admin</a>
+    <a href="/api-docs">API Docs</a>
+    <form method="POST" action="/auth/logout" class="nav-form">
+      <button class="button nav-button danger" type="submit">Cerrar sesión</button>
+    </form>
+  </nav>
+</header>
+<%- include('admin-subnav') %>

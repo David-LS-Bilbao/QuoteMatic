@@ -1,0 +1,57 @@
+{
+  "name": "quotematic",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/server.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsx watch src/server.ts",
+    "build": "npm run clean && tsc && npm run copy:assets",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "copy:views": "cpx \"src/views/**/*\" dist/views",
+    "copy:public": "cpx \"src/public/**/*\" dist/public",
+    "copy:assets": "npm run copy:views && npm run copy:public",
+    "seed": "tsx src/seeds/seed.ts",
+    "seed:admin": "tsx src/seeds/seedAdmin.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/David-LS-Bilbao/QuoteMatic.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/David-LS-Bilbao/QuoteMatic/issues"
+  },
+  "homepage": "https://github.com/David-LS-Bilbao/QuoteMatic#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "connect-mongo": "^6.0.0",
+    "dotenv": "^17.4.2",
+    "ejs": "^5.0.2",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "mongoose": "^9.5.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^5.0.6",
+    "@types/express-session": "^1.19.0",
+    "@types/node": "^25.6.0",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
+    "cpx": "^1.5.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}

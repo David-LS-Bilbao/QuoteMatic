@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">QuoteMatic</a>
+    <nav class="nav-links" aria-label="Navegación principal">
+      <a href="/">Inicio</a>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/api-docs">API Docs</a>
+      <% if (user.role === "admin") { %>
+        <a href="/admin">Admin</a>
+      <% } %>
+      <form method="POST" action="/auth/logout" class="nav-form">
+        <button class="button nav-button danger" type="submit">Cerrar sesión</button>
+      </form>
+    </nav>
+  </header>
+
+  <main class="page-shell">
+    <section class="panel">
+      <p class="eyebrow">Colección personal</p>
+      <h1>Mis favoritos</h1>
+      <p>Frases guardadas con tu sesión actual.</p>
+    </section>
+
+    <section class="favorite-list" id="favorite-list">
+      <% if (favorites.length === 0) { %>
+        <article class="panel">
+          <p class="muted">Todavía no tienes favoritos. Ve al dashboard y guarda tu primera frase.</p>
+          <a class="button primary" href="/dashboard">Ir al dashboard</a>
+        </article>
+      <% } %>
+
+      <% favorites.forEach(function(favorite) { %>
+        <article class="quote-card favorite-item" data-quote-id="<%= favorite.quote._id %>">
+          <blockquote>"<%= favorite.quote.text %>"</blockquote>
+          <p class="quote-meta">
+            <%= favorite.quote.author.name %> &middot; <%= favorite.quote.quoteType.name %> &middot; <%= favorite.quote.situation.name %>
+          </p>
+          <button class="button danger remove-favorite-button" type="button">Quitar favorito</button>
+        </article>
+      <% }); %>
+    </section>
+
+    <p class="status-message" id="favorites-message" role="status"></p>
+  </main>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

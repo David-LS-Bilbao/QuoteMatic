@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">QuoteMatic</a>
+    <nav class="nav-links" aria-label="Navegación principal">
+      <% if (user.isAuthenticated) { %>
+        <a href="/favorites">Favoritos</a>
+        <% if (user.role === "admin") { %>
+          <a href="/admin">Admin</a>
+          <a href="/api-docs">API Docs</a>
+        <% } %>
+        <form method="POST" action="/auth/logout" class="nav-form">
+          <button class="button nav-button danger" type="submit">Cerrar sesión</button>
+        </form>
+      <% } else { %>
+        <a class="button nav-button primary" href="/auth/login">Entrar</a>
+      <% } %>
+    </nav>
+  </header>
+
+  <main class="page-shell">
+    <section class="hero-panel">
+      <p class="eyebrow">Backend Bootcamp Project</p>
+      <h1><%= appName %></h1>
+      <p class="hero-copy">
+        Recomendador de frases según situación, tipo de frase y rango de edad.
+        API REST, MongoDB, sesiones, favoritos y documentación Swagger en una demo sencilla.
+      </p>
+      <div class="button-row">
+        <a class="button primary" href="/dashboard">Explorar frases</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <%- include('../partials/admin-nav') %>
+
+  <main class="page-shell">
+    <section class="panel">
+      <p class="eyebrow"><%= author && author._id ? 'Editar' : 'Nuevo' %> autor</p>
+      <h1><%= author && author._id ? 'Editar autor' : 'Crear autor' %></h1>
+
+      <% if (error) { %>
+        <p class="error-message"><%= error %></p>
+      <% } %>
+
+      <form method="POST"
+        action="<%= author && author._id ? `/admin/authors/${author._id}/update` : '/admin/authors' %>">
+
+        <div class="form-row">
+          <label>
+            Nombre <span class="required">*</span>
+            <input type="text" name="name"
+              value="<%= author ? author.name : '' %>"
+              required placeholder="Nombre completo" />
+          </label>
+
+          <label>
+            Tipo de autor
+            <select name="authorType">
+              <% authorTypes.forEach(function(at) { %>
+                <option value="<%= at %>"
+                  <%= author && author.authorType === at ? 'selected' : (at === 'unknown' && !author ? 'selected' : '') %>><%= at %></option>
+              <% }); %>
+            </select>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label>
+            Obra de origen
+            <input type="text" name="sourceWork"
+              value="<%= author && author.sourceWork ? author.sourceWork : '' %>"
+              placeholder="Ej: Star Wars, Hamlet... (opcional)" />
+          </label>
+
+          <label>
+            Tipo de fuente
+            <select name="sourceType">
+              <% sourceTypes.forEach(function(st) { %>
+                <option value="<%= st %>"
+                  <%= author && author.sourceType === st ? 'selected' : (st === 'unknown' && !author ? 'selected' : '') %>><%= st %></option>
+              <% }); %>
+            </select>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label>
+            Fuente de verificación
+            <input type="text" name="verificationSource"
+              value="<%= author && author.verificationSource ? author.verificationSource : '' %>"
+              placeholder="URL de Wikipedia u otra fuente (opcional)" />
+          </label>
+
+          <label>
+            Estado de verificación
+            <select name="verificationStatus">
+              <% verificationStatuses.forEach(function(vs) { %>
+                <option value="<%= vs %>"
+                  <%= author && author.verificationStatus === vs ? 'selected' : (vs === 'pending' && !author ? 'selected' : '') %>><%= vs %></option>
+              <% }); %>
+            </select>
+          </label>
+        </div>
+
+        <% if (author && author._id) { %>
+          <label class="checkbox-label">
+            <input type="checkbox" name="isActive" <%= author.isActive ? 'checked' : '' %> />
+            Activo
+          </label>
+        <% } %>
+
+        <div class="button-row">
+          <button class="button primary" type="submit">
+            <%= author && author._id ? 'Guardar cambios' : 'Crear autor' %>
+          </button>
+          <a class="button" href="/admin/authors">Cancelar</a>
+        </div>
+      </form>
+
+      <% if (author && author._id) { %>
+        <div class="author-quick-links">
+          <a class="button" href="/admin/authors/<%= author._id %>/quotes">Ver frases de este autor</a>
+          <a class="button primary" href="/admin/quotes/new?authorName=<%= encodeURIComponent(author.name) %>">+ Añadir frase para este autor</a>
+        </div>
+      <% } %>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">QuoteMatic</a>
+    <nav class="nav-links" aria-label="Navegación principal">
+      <% if (user.isAuthenticated) { %>
+        <a href="/dashboard">Explorar frases</a>
+        <a href="/favorites">Favoritos</a>
+        <% if (user.role === "admin") { %>
+          <a href="/admin">Admin</a>
+          <a href="/api-docs">API Docs</a>
+        <% } %>
+        <form method="POST" action="/auth/logout" class="nav-form">
+          <button class="button nav-button danger" type="submit">Cerrar sesión</button>
+        </form>
+      <% } else { %>
+        <a class="button nav-button primary" href="/auth/login">Entrar</a>
+      <% } %>
+    </nav>
+  </header>
+
+  <main class="page-shell">
+    <section class="panel dashboard-panel">
+      <div>
+        <p class="eyebrow">Generador de frases</p>
+        <h1>Explorar frases</h1>
+        <p>Elige una situación y un tipo de frase para recibir una recomendación personalizada.</p>
+        <% if (!user.isAuthenticated) { %>
+          <p class="auth-hint">
+            <a href="/auth/login">Inicia sesión</a> o <a href="/auth/register">regístrate</a> para guardar tus frases favoritas.
+          </p>
+        <% } %>
+      </div>
+
+      <form class="filter-row" id="random-quote-form">
+        <label>
+          Situación
+          <select name="situation">
+            <option value="">Cualquier situación</option>
+            <% situations.forEach(function(s) { %>
+              <option value="<%= s.slug %>"><%= s.name %></option>
+            <% }); %>
+          </select>
+        </label>
+
+        <label>
+          Tipo de frase
+          <select name="quoteType">
+            <option value="">Cualquier tipo</option>
+            <% quoteTypes.forEach(function(qt) { %>
+              <option value="<%= qt.slug %>"><%= qt.name %></option>
+            <% }); %>
+          </select>
+        </label>
+
+        <button class="button primary" type="submit">Pedir frase</button>
+      </form>
+    </section>
+
+    <section class="quote-card" id="quote-card" data-authenticated="<%= user.isAuthenticated ? 'true' : 'false' %>">
+      <p class="muted">Pulsa "Pedir frase" para empezar.</p>
+    </section>
+
+    <p class="status-message" id="dashboard-message" role="status"></p>
+  </main>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <%- include('../partials/admin-nav') %>
+
+  <main class="page-shell">
+    <section class="panel">
+      <p class="eyebrow"><%= quote ? 'Editar' : 'Nueva' %> frase</p>
+      <h1><%= quote ? 'Editar frase' : 'Crear frase' %></h1>
+
+      <% if (error) { %>
+        <p class="error-message"><%= error %></p>
+      <% } %>
+
+      <form method="POST"
+        action="<%= quote && quote._id ? `/admin/quotes/${quote._id}/update` : '/admin/quotes' %>">
+
+        <label for="text">
+          Texto de la frase
+          <textarea id="text" name="text" rows="4" required><%= quote ? quote.text : '' %></textarea>
+        </label>
+
+        <div class="form-row">
+          <label>
+            Autor
+            <input type="text" name="author" required
+              value="<%= quote ? (quote.author && quote.author.name ? quote.author.name : quote.author || '') : (prefillAuthor || '') %>"
+              placeholder="Ej: Séneca, Yoda, Marco Aurelio..." />
+          </label>
+
+          <label>
+            Situación
+            <select name="situation" required>
+              <option value="">— Seleccionar situación —</option>
+              <% situations.forEach(function(s) {
+                var sitId = quote && quote.situation ? String(quote.situation._id || quote.situation) : '';
+                var selected = sitId === String(s._id) ? 'selected' : '';
+              %>
+                <option value="<%= s._id %>" <%= selected %>><%= s.name %></option>
+              <% }); %>
+            </select>
+          </label>
+
+          <label>
+            Tipo de frase
+            <select name="quoteType" required>
+              <option value="">— Seleccionar tipo —</option>
+              <% quoteTypes.forEach(function(qt) {
+                var qtId = quote && quote.quoteType ? String(quote.quoteType._id || quote.quoteType) : '';
+                var selected = qtId === String(qt._id) ? 'selected' : '';
+              %>
+                <option value="<%= qt._id %>" <%= selected %>><%= qt.name %></option>
+              <% }); %>
+            </select>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label>
+            Idioma
+            <input type="text" name="language"
+              value="<%= quote ? (quote.language || 'es') : 'es' %>"
+              placeholder="es" />
+          </label>
+
+          <label>
+            Clasificación
+            <select name="contentRating" required>
+              <% contentRatings.forEach(function(r) { %>
+                <option value="<%= r %>"
+                  <%= quote && quote.contentRating === r ? 'selected' : '' %>><%= r %></option>
+              <% }); %>
+            </select>
+          </label>
+
+          <label>
+            Verificación
+            <select name="verificationStatus">
+              <% verificationStatuses.forEach(function(vs) { %>
+                <option value="<%= vs %>"
+                  <%= quote && quote.verificationStatus === vs ? 'selected' : (vs === 'pending' && !quote ? 'selected' : '') %>><%= vs %></option>
+              <% }); %>
+            </select>
+          </label>
+
+          <label>
+            Tipo de fuente
+            <select name="sourceType">
+              <% sourceTypes.forEach(function(st) { %>
+                <option value="<%= st %>"
+                  <%= quote && quote.sourceType === st ? 'selected' : (st === 'unknown' && !quote ? 'selected' : '') %>><%= st %></option>
+              <% }); %>
+            </select>
+          </label>
+        </div>
+
+        <label for="sourceReference">
+          Referencia de fuente
+          <input id="sourceReference" type="text" name="sourceReference"
+            value="<%= quote && quote.sourceReference ? quote.sourceReference : '' %>"
+            placeholder="URL o referencia bibliográfica (opcional)" />
+        </label>
+
+        <div class="button-row">
+          <button class="button primary" type="submit">
+            <%= quote && quote._id ? 'Guardar cambios' : 'Crear frase' %>
+          </button>
+          <a class="button" href="/admin/quotes">Cancelar</a>
+        </div>
+      </form>
+    </section>
+  </main>
+</body>
+</html>
