@@ -11,6 +11,10 @@ const swaggerOptions: Options = {
     },
     servers: [
       {
+        url: "https://quotematic.davlos.es",
+        description: "Demo VPS (produccion)",
+      },
+      {
         url: "http://localhost:3000",
         description: "Servidor local de desarrollo",
       },
@@ -44,6 +48,52 @@ const swaggerOptions: Options = {
           properties: {
             success: { type: "boolean", example: false },
             message: { type: "string", example: "Authentication required" },
+            error: {
+              type: "object",
+              properties: {
+                code: { type: "string", example: "INVALID_CREDENTIALS" },
+              },
+            },
+          },
+        },
+        ApiAuthSuccess: {
+          type: "object",
+          properties: {
+            success: { type: "boolean", example: true },
+            data: {
+              type: "object",
+              properties: {
+                user: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string", example: "662f00000000000000000006" },
+                    role: { type: "string", example: "user" },
+                    ageGroup: { type: "string", example: "adult_18_plus" },
+                  },
+                },
+              },
+            },
+          },
+        },
+        ApiMeResponse: {
+          type: "object",
+          properties: {
+            success: { type: "boolean", example: true },
+            authenticated: { type: "boolean", example: true },
+            data: {
+              nullable: true,
+              type: "object",
+              properties: {
+                user: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string", example: "662f00000000000000000006" },
+                    role: { type: "string", example: "user" },
+                    ageGroup: { type: "string", example: "adult_18_plus" },
+                  },
+                },
+              },
+            },
           },
         },
         Author: {
@@ -284,6 +334,229 @@ const swaggerOptions: Options = {
             "200": { description: "Usuario admin autorizado" },
             "401": { description: "Sesion requerida" },
             "403": { description: "Rol admin requerido" },
+          },
+        },
+      },
+      "/api/auth/register": {
+        post: {
+          tags: ["Auth"],
+          summary: "Registra un usuario y abre sesion (JSON)",
+          description:
+            "Crea el usuario, inicia sesion y devuelve la cookie connect.sid. Apto para clientes React/KMP.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/RegisterRequest" },
+              },
+            },
+          },
+          responses: {
+            "201": {
+              description: "Usuario creado y sesion iniciada",
+              headers: {
+                "Set-Cookie": {
+                  description: "connect.sid — cookie de sesion httpOnly",
+                  schema: { type: "string" },
+                },
+              },
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiAuthSuccess" },
+                },
+              },
+            },
+            "400": {
+              description: "Campos obligatorios ausentes o ageRange invalido",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
+            "403": {
+              description: "Registro de menores de 14 no permitido",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
+            "409": {
+              description: "Email ya registrado",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
+            "500": {
+              description: "Error interno",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/api/auth/login": {
+        post: {
+          tags: ["Auth"],
+          summary: "Inicia sesion y devuelve cookie (JSON)",
+          description:
+            "Valida credenciales, crea sesion en MongoDB y devuelve connect.sid en Set-Cookie. Usar con credentials: include en fetch.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/LoginRequest" },
+              },
+            },
+          },
+          responses: {
+            "200": {
+              description: "Login correcto",
+              headers: {
+                "Set-Cookie": {
+                  description: "connect.sid — cookie de sesion httpOnly",
+                  schema: { type: "string" },
+                },
+              },
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiAuthSuccess" },
+                },
+              },
+            },
+            "400": {
+              description: "Email o password ausentes",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
+            "401": {
+              description: "Credenciales incorrectas",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
+            "403": {
+              description: "Usuario inactivo",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
+            "500": {
+              description: "Error interno",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/api/auth/logout": {
+        post: {
+          tags: ["Auth"],
+          summary: "Cierra sesion (JSON)",
+          description: "Destruye la sesion en MongoDB y limpia la cookie connect.sid.",
+          security: [{ cookieAuth: [] }],
+          responses: {
+            "200": {
+              description: "Sesion destruida",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: { success: { type: "boolean", example: true } },
+                  },
+                },
+              },
+            },
+            "401": {
+              description: "Sesion requerida",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
+            "500": {
+              description: "Error interno",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/api/auth/me": {
+        get: {
+          tags: ["Auth"],
+          summary: "Estado de sesion actual (JSON)",
+          description:
+            "No requiere autenticacion. Devuelve authenticated: false si no hay sesion activa.",
+          security: [{ cookieAuth: [] }],
+          responses: {
+            "200": {
+              description: "Estado de autenticacion",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiMeResponse" },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/api/auth/admin-check": {
+        get: {
+          tags: ["Auth"],
+          summary: "Comprueba acceso admin (JSON)",
+          security: [{ cookieAuth: [] }],
+          responses: {
+            "200": {
+              description: "Usuario admin autorizado",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean", example: true },
+                      message: { type: "string", example: "Admin access granted" },
+                    },
+                  },
+                },
+              },
+            },
+            "401": {
+              description: "Sesion requerida",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
+            "403": {
+              description: "Rol admin requerido",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
           },
         },
       },
