@@ -25,6 +25,7 @@ const swaggerOptions: Options = {
       { name: "Catalogs", description: "Catalogos publicos" },
       { name: "Quotes", description: "Frases y CRUD protegido" },
       { name: "Favorites", description: "Favoritos del usuario autenticado" },
+      { name: "My Quotes", description: "Frases privadas del usuario autenticado" },
     ],
     components: {
       securitySchemes: {
@@ -228,6 +229,54 @@ const swaggerOptions: Options = {
             verificationStatus: { type: "string", example: "manual_verified" },
             sourceType: { type: "string", example: "original" },
             sourceReference: { type: "string", example: "Swagger" },
+          },
+        },
+        UserQuote: {
+          type: "object",
+          properties: {
+            _id: { type: "string", example: "662f00000000000000000010" },
+            text: { type: "string", example: "Mi frase privada" },
+            textNormalized: { type: "string", example: "mi frase privada" },
+            authorText: { type: "string", example: "Yo mismo" },
+            situation: { $ref: "#/components/schemas/Situation" },
+            quoteType: { $ref: "#/components/schemas/QuoteType" },
+            language: { type: "string", example: "es" },
+            contentRating: { type: "string", example: "all" },
+            sourceType: { type: "string", example: "original" },
+            sourceReference: { type: "string", example: "Mi diario" },
+            ownerUserId: { type: "string", example: "662f00000000000000000006" },
+            isActive: { type: "boolean", example: true },
+          },
+        },
+        CreateUserQuoteRequest: {
+          type: "object",
+          required: ["text"],
+          properties: {
+            text: { type: "string", example: "Mi frase privada" },
+            authorText: { type: "string", example: "Yo mismo", maxLength: 200 },
+            situation: { type: "string", example: "trabajo", description: "Slug de Situation activa" },
+            quoteType: { type: "string", example: "motivational", description: "Slug de QuoteType activo" },
+            language: { type: "string", example: "es" },
+            contentRating: { type: "string", enum: ["all", "teen", "adult"], example: "all" },
+            sourceType: {
+              type: "string",
+              enum: ["book", "movie", "tv_show", "historical", "original", "unknown"],
+              example: "original",
+            },
+            sourceReference: { type: "string", example: "Mi diario" },
+          },
+        },
+        UpdateUserQuoteRequest: {
+          type: "object",
+          properties: {
+            text: { type: "string", example: "Texto actualizado" },
+            authorText: { type: "string", example: "Otro autor", maxLength: 200 },
+            situation: { type: "string", example: "estres", description: "Slug de Situation activa" },
+            quoteType: { type: "string", example: "stoic", description: "Slug de QuoteType activo" },
+            language: { type: "string", example: "en" },
+            contentRating: { type: "string", enum: ["all", "teen", "adult"], example: "teen" },
+            sourceType: { type: "string", example: "book" },
+            sourceReference: { type: "string", example: "Libro de cabecera" },
           },
         },
       },
@@ -919,6 +968,252 @@ const swaggerOptions: Options = {
             "400": { description: "Id invalido" },
             "401": { description: "Sesion requerida" },
             "404": { description: "Favorito activo no encontrado" },
+          },
+        },
+      },
+      "/api/me/quotes": {
+        get: {
+          tags: ["My Quotes"],
+          summary: "Lista frases privadas del usuario autenticado",
+          description:
+            "Devuelve frases privadas paginadas del usuario en sesión. " +
+            "Filtros opcionales por situation (slug), quoteType (slug), contentRating y search.",
+          security: [{ cookieAuth: [] }],
+          parameters: [
+            {
+              name: "situation",
+              in: "query",
+              required: false,
+              schema: { type: "string", example: "trabajo" },
+              description: "Slug de Situation activa",
+            },
+            {
+              name: "quoteType",
+              in: "query",
+              required: false,
+              schema: { type: "string", example: "stoic" },
+              description: "Slug de QuoteType activo",
+            },
+            {
+              name: "contentRating",
+              in: "query",
+              required: false,
+              schema: { type: "string", enum: ["all", "teen", "adult"] },
+            },
+            {
+              name: "search",
+              in: "query",
+              required: false,
+              schema: { type: "string", minLength: 2, maxLength: 100, example: "vida" },
+              description: "Texto libre (2–100 chars)",
+            },
+            {
+              name: "page",
+              in: "query",
+              required: false,
+              schema: { type: "integer", minimum: 1, default: 1 },
+            },
+            {
+              name: "limit",
+              in: "query",
+              required: false,
+              schema: { type: "integer", minimum: 1, maximum: 100, default: 20 },
+            },
+          ],
+          responses: {
+            "200": {
+              description: "Frases privadas paginadas",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean", example: true },
+                      data: { type: "array", items: { $ref: "#/components/schemas/UserQuote" } },
+                      meta: {
+                        type: "object",
+                        properties: {
+                          page: { type: "integer", example: 1 },
+                          limit: { type: "integer", example: 20 },
+                          total: { type: "integer", example: 5 },
+                          totalPages: { type: "integer", example: 1 },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            "400": {
+              description: "Parámetro inválido",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ApiError" } } },
+            },
+            "401": {
+              description: "Sesión requerida",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ApiError" } } },
+            },
+            "404": {
+              description: "Slug de situation o quoteType no encontrado",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ApiError" } } },
+            },
+          },
+        },
+        post: {
+          tags: ["My Quotes"],
+          summary: "Crea una frase privada",
+          description: "Requiere sesión. ownerUserId siempre sale de la sesión.",
+          security: [{ cookieAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/CreateUserQuoteRequest" },
+              },
+            },
+          },
+          responses: {
+            "201": {
+              description: "Frase privada creada",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean", example: true },
+                      data: { $ref: "#/components/schemas/UserQuote" },
+                    },
+                  },
+                },
+              },
+            },
+            "400": {
+              description: "Payload inválido o slug no encontrado",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ApiError" } } },
+            },
+            "401": {
+              description: "Sesión requerida",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ApiError" } } },
+            },
+            "404": {
+              description: "Slug de situation o quoteType no encontrado",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ApiError" } } },
+            },
+            "409": {
+              description: "Ya existe una frase con ese texto para este usuario",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ApiError" } } },
+            },
+            "500": {
+              description: "Error interno",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ApiError" } } },
+            },
+          },
+        },
+      },
+      "/api/me/quotes/random": {
+        get: {
+          tags: ["My Quotes"],
+          summary: "Devuelve una frase privada aleatoria del usuario",
+          description: "Acepta los mismos filtros opcionales que GET /api/me/quotes.",
+          security: [{ cookieAuth: [] }],
+          parameters: [
+            {
+              name: "situation",
+              in: "query",
+              required: false,
+              schema: { type: "string", example: "trabajo" },
+            },
+            {
+              name: "quoteType",
+              in: "query",
+              required: false,
+              schema: { type: "string", example: "stoic" },
+            },
+            {
+              name: "contentRating",
+              in: "query",
+              required: false,
+              schema: { type: "string", enum: ["all", "teen", "adult"] },
+            },
+          ],
+          responses: {
+            "200": {
+              description: "Frase privada aleatoria",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean", example: true },
+                      data: { $ref: "#/components/schemas/UserQuote" },
+                    },
+                  },
+                },
+              },
+            },
+            "401": {
+              description: "Sesión requerida",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ApiError" } } },
+            },
+            "404": {
+              description: "No hay frases activas para el filtro",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ApiError" } } },
+            },
+          },
+        },
+      },
+      "/api/me/quotes/{id}": {
+        get: {
+          tags: ["My Quotes"],
+          summary: "Devuelve una frase privada por id",
+          security: [{ cookieAuth: [] }],
+          parameters: [
+            { name: "id", in: "path", required: true, schema: { type: "string" } },
+          ],
+          responses: {
+            "200": { description: "Frase privada encontrada" },
+            "400": { description: "Id inválido" },
+            "401": { description: "Sesión requerida" },
+            "404": { description: "Frase no encontrada o no pertenece al usuario" },
+          },
+        },
+        put: {
+          tags: ["My Quotes"],
+          summary: "Actualiza parcialmente una frase privada",
+          description: "Requiere sesión. Solo el propietario puede editar. ownerUserId no se acepta en el body.",
+          security: [{ cookieAuth: [] }],
+          parameters: [
+            { name: "id", in: "path", required: true, schema: { type: "string" } },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/UpdateUserQuoteRequest" },
+              },
+            },
+          },
+          responses: {
+            "200": { description: "Frase privada actualizada" },
+            "400": { description: "Payload o id inválido" },
+            "401": { description: "Sesión requerida" },
+            "404": { description: "Frase no encontrada o no pertenece al usuario" },
+            "409": { description: "Texto duplicado para este usuario" },
+            "500": { description: "Error interno" },
+          },
+        },
+        delete: {
+          tags: ["My Quotes"],
+          summary: "Borra lógicamente una frase privada",
+          description: "Requiere sesión. Solo el propietario puede borrar. Marca isActive=false.",
+          security: [{ cookieAuth: [] }],
+          parameters: [
+            { name: "id", in: "path", required: true, schema: { type: "string" } },
+          ],
+          responses: {
+            "200": { description: "Frase privada desactivada" },
+            "400": { description: "Id inválido" },
+            "401": { description: "Sesión requerida" },
+            "404": { description: "Frase no encontrada o no pertenece al usuario" },
           },
         },
       },
