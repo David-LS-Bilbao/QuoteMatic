@@ -439,7 +439,242 @@ Nota: en la versión actual, favoritos aplica sobre frases públicas.
 
 ---
 
-## 8. Ejemplos curl
+## 8. Frases privadas del usuario
+
+Los endpoints de frases privadas viven bajo:
+
+```text
+/api/me/quotes
+```
+
+Todos requieren sesión activa. El backend obtiene el propietario desde `req.session.userId`; el cliente nunca debe enviar `ownerUserId`.
+
+Regla de seguridad:
+
+```text
+Toda operación por id se filtra por ownerUserId + isActive.
+Si la frase no pertenece al usuario autenticado, la API devuelve 404.
+```
+
+### 8.1 Listar mis frases privadas
+
+```http
+GET /api/me/quotes
+```
+
+Query params soportados:
+
+| Param | Tipo | Descripción |
+|---|---|---|
+| `situation` | string | Slug de situación, opcional |
+| `quoteType` | string | Slug de tipo de frase, opcional |
+| `contentRating` | `all`, `teen`, `adult` | Clasificación de contenido, opcional |
+| `search` | string | Búsqueda por texto, 2 a 100 caracteres |
+| `page` | number | Página, mínimo 1 |
+| `limit` | number | Resultados por página, 1 a 100 |
+
+Valores por defecto:
+
+```text
+page=1
+limit=20
+```
+
+Respuesta correcta:
+
+```json
+{
+  "success": true,
+  "data": [],
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 1,
+    "totalPages": 1
+  }
+}
+```
+
+### 8.2 Crear frase privada
+
+```http
+POST /api/me/quotes
+```
+
+Body mínimo:
+
+```json
+{
+  "text": "Mi frase privada",
+  "contentRating": "all",
+  "sourceType": "original"
+}
+```
+
+Body con categorías opcionales:
+
+```json
+{
+  "text": "Mi frase privada",
+  "authorText": "Yo mismo",
+  "situation": "trabajo",
+  "quoteType": "motivational",
+  "language": "es",
+  "contentRating": "all",
+  "sourceType": "original",
+  "sourceReference": "Mi diario"
+}
+```
+
+Notas:
+
+- `situation` y `quoteType` se envían como `slug`, no como ObjectId.
+- `authorText` es texto libre.
+- `ownerUserId` lo asigna el servidor desde la sesión.
+- Si el mismo usuario crea otra frase con el mismo texto normalizado, la API devuelve `409`.
+
+Respuesta correcta:
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "USER_QUOTE_ID",
+    "text": "Mi frase privada",
+    "ownerUserId": "USER_ID",
+    "isActive": true
+  }
+}
+```
+
+Errores esperados:
+
+```text
+400 payload inválido
+401 sesión requerida
+404 slug de situation o quoteType no encontrado
+409 texto duplicado para este usuario
+500 error interno
+```
+
+### 8.3 Frase privada aleatoria
+
+```http
+GET /api/me/quotes/random
+```
+
+Query params soportados:
+
+```text
+situation
+quoteType
+contentRating
+```
+
+Respuesta correcta:
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "USER_QUOTE_ID",
+    "text": "Mi frase privada"
+  }
+}
+```
+
+Si el usuario no tiene frases privadas activas para el filtro indicado, devuelve `404`.
+
+### 8.4 Detalle de frase privada
+
+```http
+GET /api/me/quotes/:id
+```
+
+Respuesta correcta:
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "USER_QUOTE_ID",
+    "text": "Mi frase privada"
+  }
+}
+```
+
+Errores esperados:
+
+```text
+400 id inválido
+401 sesión requerida
+404 frase no encontrada o no pertenece al usuario
+```
+
+### 8.5 Actualizar frase privada
+
+```http
+PUT /api/me/quotes/:id
+```
+
+Body parcial:
+
+```json
+{
+  "text": "Texto actualizado",
+  "contentRating": "teen",
+  "situation": "trabajo",
+  "quoteType": "stoic"
+}
+```
+
+Reglas:
+
+- Si se actualiza `text`, el backend recalcula `textNormalized`.
+- No se acepta `ownerUserId` desde el cliente.
+- `situation` y `quoteType` se actualizan por `slug`.
+
+Errores esperados:
+
+```text
+400 payload o id inválido
+401 sesión requerida
+404 frase no encontrada o no pertenece al usuario
+409 texto duplicado para este usuario
+500 error interno
+```
+
+### 8.6 Borrar frase privada
+
+```http
+DELETE /api/me/quotes/:id
+```
+
+El borrado es lógico: el backend marca `isActive=false`.
+
+Respuesta correcta:
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "USER_QUOTE_ID",
+    "isActive": false
+  }
+}
+```
+
+Errores esperados:
+
+```text
+400 id inválido
+401 sesión requerida
+404 frase no encontrada o no pertenece al usuario
+```
+
+---
+
+## 9. Ejemplos curl
 
 ### Login guardando cookie
 
@@ -461,33 +696,56 @@ curl -i -sb /tmp/qm_cookie.txt https://quotematic.davlos.es/api/auth/me
 curl -i -sb /tmp/qm_cookie.txt -X POST https://quotematic.davlos.es/api/auth/logout
 ```
 
-### Listar frases paginadas
+### Listar frases públicas paginadas
 
 ```bash
 curl -s "https://quotematic.davlos.es/api/quotes?page=1&limit=20"
 ```
 
-### Filtrar por situación
+### Filtrar frases públicas por situación
 
 ```bash
 curl -s "https://quotematic.davlos.es/api/quotes?situation=trabajo"
 ```
 
-### Filtrar por tipo
+### Filtrar frases públicas por tipo
 
 ```bash
 curl -s "https://quotematic.davlos.es/api/quotes?quoteType=motivational"
 ```
 
-### Buscar texto
+### Buscar frases públicas por texto
 
 ```bash
 curl -s "https://quotematic.davlos.es/api/quotes?search=vida"
 ```
 
+### Crear frase privada
+
+```bash
+curl -s -X POST "https://quotematic.davlos.es/api/me/quotes" \
+  -b /tmp/qm_cookie.txt \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Mi frase privada","contentRating":"all","sourceType":"original"}'
+```
+
+### Listar mis frases privadas
+
+```bash
+curl -s "https://quotematic.davlos.es/api/me/quotes" \
+  -b /tmp/qm_cookie.txt
+```
+
+### Frase privada aleatoria
+
+```bash
+curl -s "https://quotematic.davlos.es/api/me/quotes/random" \
+  -b /tmp/qm_cookie.txt
+```
+
 ---
 
-## 9. Ejemplo fetch para React
+## 10. Ejemplo fetch para React
 
 ```ts
 const API_BASE_URL = "https://quotematic.davlos.es";
@@ -528,9 +786,36 @@ export async function login(email: string, password: string) {
 }
 ```
 
+Crear frase privada:
+
+```ts
+export async function createMyQuote(text: string) {
+  const response = await fetch(`${API_BASE_URL}/api/me/quotes`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      text,
+      contentRating: "all",
+      sourceType: "original",
+    }),
+  });
+
+  const json = await response.json();
+
+  if (!response.ok) {
+    throw new Error(json.message ?? "Error creating private quote");
+  }
+
+  return json;
+}
+```
+
 ---
 
-## 10. Nota para Kotlin Multiplatform
+## 11. Nota para Kotlin Multiplatform
 
 La futura app móvil no hablará con MongoDB directamente.
 
@@ -559,27 +844,27 @@ manejo de 401/403
 
 ---
 
-## 11. Pendientes de API
+## 12. Pendientes de API
 
 Pendientes antes de considerar estable el contrato para KMP:
 
-1. CRUD privado de frases por usuario: `/api/me/quotes`.
-2. Validar favoritos desde React local.
-3. Decidir si logout debe ser idempotente.
-4. Importación CSV admin.
-5. Revisar Swagger completo tras nuevas features.
-6. Definir contrato final de errores.
+1. Validar favoritos desde React local.
+2. Decidir si logout debe ser idempotente.
+3. Importación CSV admin.
+4. Revisar Swagger completo tras nuevas features.
+5. Definir contrato final de errores.
+6. Añadir tests automatizados backend si se amplía el proyecto.
 
 ---
 
-## 12. Estado de hitos
+## 13. Estado de hitos
 
 ```text
 [OK] /api/auth/* JSON
 [OK] CORS para React local
 [OK] Cookies cross-origin
 [OK] /api/quotes con filtros y paginación
-[PENDIENTE] /api/me/quotes CRUD privado
+[OK] /api/me/quotes CRUD privado
 [PENDIENTE] CSV admin import
 [PENDIENTE] React local validando flujo completo
 [PENDIENTE] KMP Mobile
