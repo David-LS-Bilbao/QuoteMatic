@@ -638,18 +638,63 @@ const swaggerOptions: Options = {
       "/api/quotes": {
         get: {
           tags: ["Quotes"],
-          summary: "Lista frases activas",
+          summary: "Lista frases activas con filtros y paginación",
+          description:
+            "Devuelve frases activas paginadas. Sin parámetros usa page=1 y limit=20. " +
+            "Filtros por slug (situation, quoteType), ObjectId (author), enum (contentRating) y texto libre (search).",
           parameters: [
+            {
+              name: "situation",
+              in: "query",
+              required: false,
+              description: "Slug de Situation activa. Ejemplo: trabajo, estres",
+              schema: { type: "string", example: "trabajo" },
+            },
+            {
+              name: "quoteType",
+              in: "query",
+              required: false,
+              description: "Slug de QuoteType activo. Ejemplo: stoic, motivational",
+              schema: { type: "string", example: "stoic" },
+            },
             {
               name: "contentRating",
               in: "query",
               required: false,
               schema: { type: "string", enum: ["all", "teen", "adult"] },
             },
+            {
+              name: "author",
+              in: "query",
+              required: false,
+              description: "ObjectId MongoDB de Author activo",
+              schema: { type: "string", example: "662f00000000000000000001" },
+            },
+            {
+              name: "search",
+              in: "query",
+              required: false,
+              description: "Texto libre (2–100 chars). Busca sobre el campo textNormalized.",
+              schema: { type: "string", minLength: 2, maxLength: 100, example: "vida" },
+            },
+            {
+              name: "page",
+              in: "query",
+              required: false,
+              description: "Número de página (≥1). Default: 1",
+              schema: { type: "integer", minimum: 1, default: 1, example: 1 },
+            },
+            {
+              name: "limit",
+              in: "query",
+              required: false,
+              description: "Resultados por página (1–100). Default: 20",
+              schema: { type: "integer", minimum: 1, maximum: 100, default: 20, example: 20 },
+            },
           ],
           responses: {
             "200": {
-              description: "Frases activas",
+              description: "Frases activas paginadas",
               content: {
                 "application/json": {
                   schema: {
@@ -660,8 +705,33 @@ const swaggerOptions: Options = {
                         type: "array",
                         items: { $ref: "#/components/schemas/Quote" },
                       },
+                      meta: {
+                        type: "object",
+                        properties: {
+                          page: { type: "integer", example: 1 },
+                          limit: { type: "integer", example: 20 },
+                          total: { type: "integer", example: 156 },
+                          totalPages: { type: "integer", example: 8 },
+                        },
+                      },
                     },
                   },
+                },
+              },
+            },
+            "400": {
+              description: "Parámetro inválido (page, limit, contentRating, search o author con formato incorrecto)",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
+            "404": {
+              description: "Slug de situation o quoteType no encontrado, o author no encontrado",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
                 },
               },
             },
