@@ -52,6 +52,79 @@ const normalizeText = (value: string): string => {
     .replace(/[\u0300-\u036f]/g, "");
 };
 
+// --- Helpers de filtros y paginación para GET /api/quotes ---
+
+type ParseIntResult =
+  | { value: number }
+  | { error: string };
+
+const parsePositiveIntegerParam = (
+  raw: unknown,
+  name: string,
+  min: number,
+  max: number,
+  defaultValue: number
+): ParseIntResult => {
+  if (raw === undefined) return { value: defaultValue };
+  if (typeof raw !== "string") return { error: `Invalid ${name}` };
+  const parsed = parseInt(raw, 10);
+  if (isNaN(parsed) || parsed < min || parsed > max) {
+    return { error: `${name} must be an integer between ${min} and ${max}` };
+  }
+  return { value: parsed };
+};
+
+type PaginationResult =
+  | { page: number; limit: number }
+  | { error: string };
+
+const parsePagination = (query: Request["query"]): PaginationResult => {
+  const pageResult = parsePositiveIntegerParam(query.page, "page", 1, 10_000, 1);
+  if ("error" in pageResult) return pageResult;
+
+  const limitResult = parsePositiveIntegerParam(query.limit, "limit", 1, 100, 20);
+  if ("error" in limitResult) return limitResult;
+
+  return { page: pageResult.value, limit: limitResult.value };
+};
+
+type SlugResolveResult =
+  | { id: mongoose.Types.ObjectId }
+  | { error: string; status: 400 | 404 };
+
+const resolveSituationBySlug = async (slug: unknown): Promise<SlugResolveResult | null> => {
+  if (slug === undefined) return null;
+  if (typeof slug !== "string") return { error: "Invalid situation slug", status: 400 };
+  const doc = await Situation.findOne({ slug, isActive: true }).select("_id");
+  if (!doc) return { error: "Situation not found", status: 404 };
+  return { id: doc._id as mongoose.Types.ObjectId };
+};
+
+const resolveQuoteTypeBySlug = async (slug: unknown): Promise<SlugResolveResult | null> => {
+  if (slug === undefined) return null;
+  if (typeof slug !== "string") return { error: "Invalid quoteType slug", status: 400 };
+  const doc = await QuoteType.findOne({ slug, isActive: true }).select("_id");
+  if (!doc) return { error: "Quote type not found", status: 404 };
+  return { id: doc._id as mongoose.Types.ObjectId };
+};
+
+type AuthorFilterResult =
+  | { id: mongoose.Types.ObjectId }
+  | { error: string; status: 400 | 404 }
+  | null;
+
+const validateAuthorFilter = async (author: unknown): Promise<AuthorFilterResult> => {
+  if (author === undefined) return null;
+  if (typeof author !== "string" || !isValidMongoId(author)) {
+    return { error: "Invalid author id", status: 400 };
+  }
+  const exists = await Author.exists({ _id: author, isActive: true });
+  if (!exists) return { error: "Author not found", status: 404 };
+  return { id: new mongoose.Types.ObjectId(author) };
+};
+
+// --- Fin helpers de filtros ---
+
 const validateQuoteReferences = async (
   author?: unknown,
   situation?: unknown,
@@ -124,37 +197,79 @@ export const getQuotes = async (
   res: Response
 ): Promise<void> => {
   try {
-    // Por defecto la API publica solo devuelve frases activas.
-    const filter: Record<string, unknown> = {
-      isActive: true,
-    };
+    const pagination = parsePagination(req.query);
+    if ("error" in pagination) {
+      res.status(400).json({ success: false, message: pagination.error });
+      return;
+    }
+    const { page, limit } = pagination;
 
-    // Filtro opcional para probar la clasificacion de contenido desde query params.
-   const { contentRating } = req.query;
+    const filter: Record<string, unknown> = { isActive: true };
 
-if (contentRating !== undefined) {
-  if (
-    typeof contentRating !== "string" ||
-    !isValidContentRating(contentRating)
-  ) {
-    res.status(400).json({
-      success: false,
-      message: "Invalid contentRating. Allowed values: all, teen, adult",
-    });
-    return;
-  }
+    const { contentRating, search } = req.query;
 
-  filter.contentRating = contentRating;
-}
+    if (contentRating !== undefined) {
+      if (typeof contentRating !== "string" || !isValidContentRating(contentRating)) {
+        res.status(400).json({
+          success: false,
+          message: "Invalid contentRating. Allowed values: all, teen, adult",
+        });
+        return;
+      }
+      filter.contentRating = contentRating;
+    }
 
-    // Se ordena de mas reciente a mas antigua para una respuesta predecible.
-    const quotes = await Quote.find(filter)
-      .populate(quotePopulate)
-      .sort({ createdAt: -1 });
+    const situationResult = await resolveSituationBySlug(req.query.situation);
+    if (situationResult !== null && "error" in situationResult) {
+      res.status(situationResult.status).json({ success: false, message: situationResult.error });
+      return;
+    }
+    if (situationResult !== null) filter.situation = situationResult.id;
+
+    const quoteTypeResult = await resolveQuoteTypeBySlug(req.query.quoteType);
+    if (quoteTypeResult !== null && "error" in quoteTypeResult) {
+      res.status(quoteTypeResult.status).json({ success: false, message: quoteTypeResult.error });
+      return;
+    }
+    if (quoteTypeResult !== null) filter.quoteType = quoteTypeResult.id;
+
+    const authorResult = await validateAuthorFilter(req.query.author);
+    if (authorResult !== null && "error" in authorResult) {
+      res.status(authorResult.status).json({ success: false, message: authorResult.error });
+      return;
+    }
+    if (authorResult !== null) filter.author = authorResult.id;
+
+    if (search !== undefined) {
+      if (typeof search !== "string" || search.trim().length < 2 || search.trim().length > 100) {
+        res.status(400).json({
+          success: false,
+          message: "search must be between 2 and 100 characters",
+        });
+        return;
+      }
+      const normalized = normalizeText(search);
+      filter.textNormalized = { $regex: normalized, $options: "i" };
+    }
+
+    const [quotes, total] = await Promise.all([
+      Quote.find(filter)
+        .populate(quotePopulate)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit),
+      Quote.countDocuments(filter),
+    ]);
 
     res.status(200).json({
       success: true,
       data: quotes,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     handleApiError(error, res);
