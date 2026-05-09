@@ -10,6 +10,7 @@ import catalogApiRoutes from "./routes/api/catalogApi.routes";
 import authRoutes from "./routes/auth.routes";
 import authApiRoutes from "./routes/api/authApi.routes";
 import favoriteApiRoutes from "./routes/api/favoriteApi.routes";
+import userQuoteApiRoutes from "./routes/api/userQuoteApi.routes";
 import docsRoutes from "./routes/docs.routes";
 import webRoutes from "./routes/web.routes";
 import adminRoutes from "./routes/admin.routes";
@@ -90,6 +91,7 @@ app.use("/api/quotes", quoteApiRoutes);
 app.use("/api/auth", authApiRoutes);
 app.use("/api", catalogApiRoutes);
 app.use("/api/favorites", favoriteApiRoutes);
+app.use("/api/me/quotes", userQuoteApiRoutes);
 
 
 app.use("/api", (_req, res) => {
