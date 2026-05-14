@@ -8,6 +8,7 @@ import {
   getRandomQuote,
   updateQuote,
 } from "../../controllers/api/quoteApi.controller";
+import { bulkCreateQuotes } from "../../controllers/api/quoteBulkApi.controller";
 import { isAuthenticated } from "../../middlewares/auth.middleware";
 import { isAdmin } from "../../middlewares/role.middleware";
 
@@ -25,6 +26,9 @@ router.get("/:id", getQuoteById);
 
 // Crea una nueva frase. Solo usuarios admin autenticados.
 router.post("/", isAuthenticated, isAdmin, createQuote);
+
+// Importacion masiva de frases via JSON. Solo admin. Debe declararse antes de /:id.
+router.post("/bulk", isAuthenticated, isAdmin, bulkCreateQuotes);
 
 // Actualiza una frase existente. Solo usuarios admin autenticados.
 router.put("/:id", isAuthenticated, isAdmin, updateQuote);
