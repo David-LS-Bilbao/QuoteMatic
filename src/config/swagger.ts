@@ -279,6 +279,69 @@ const swaggerOptions: Options = {
             sourceReference: { type: "string", example: "Libro de cabecera" },
           },
         },
+        BulkQuoteItem: {
+          type: "object",
+          required: ["text", "authorName", "situationSlug", "quoteTypeSlug"],
+          properties: {
+            text: { type: "string", example: "Tienes poder sobre tu mente..." },
+            authorName: { type: "string", example: "Marco Aurelio" },
+            authorType: { type: "string", enum: ["real", "historical", "fictional", "unknown"], example: "historical" },
+            situationSlug: { type: "string", example: "trabajo" },
+            quoteTypeSlug: { type: "string", example: "stoic" },
+            language: { type: "string", example: "es", default: "es" },
+            contentRating: { type: "string", enum: ["all", "teen", "adult"], example: "all", default: "all" },
+            verificationStatus: {
+              type: "string",
+              enum: ["original", "pending", "manual_verified", "rejected", "disputed"],
+              example: "pending",
+              default: "pending",
+            },
+            sourceType: {
+              type: "string",
+              enum: ["book", "movie", "tv_show", "historical", "original", "unknown"],
+              example: "book",
+              default: "unknown",
+            },
+            sourceReference: { type: "string", example: "Meditaciones" },
+          },
+        },
+        BulkCreateQuotesRequest: {
+          type: "object",
+          required: ["quotes"],
+          properties: {
+            quotes: {
+              type: "array",
+              minItems: 1,
+              maxItems: 500,
+              items: { $ref: "#/components/schemas/BulkQuoteItem" },
+            },
+          },
+        },
+        BulkCreateQuotesResponse: {
+          type: "object",
+          properties: {
+            success: { type: "boolean", example: true },
+            data: {
+              type: "object",
+              properties: {
+                total: { type: "integer", example: 50 },
+                imported: { type: "integer", example: 47 },
+                skipped: { type: "integer", example: 3 },
+                errors: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      row: { type: "integer", example: 5 },
+                      text: { type: "string", example: "Frase duplicada..." },
+                      message: { type: "string", example: "Frase duplicada para este autor" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     },
     paths: {
@@ -804,6 +867,69 @@ const swaggerOptions: Options = {
             "400": { description: "Payload o referencias invalidas" },
             "401": { description: "Sesion requerida" },
             "403": { description: "Rol admin requerido" },
+          },
+        },
+      },
+      "/api/quotes/bulk": {
+        post: {
+          tags: ["Quotes"],
+          summary: "Importacion masiva de frases (admin)",
+          description:
+            "Importa hasta 500 frases en una sola peticion. " +
+            "El autor se busca o crea por nombre. " +
+            "Los slugs de situation y quoteType se resuelven contra catalogo activo. " +
+            "Las filas que fallan se incluyen en errors[] sin abortar el resto. " +
+            "Requiere sesion activa y rol admin.",
+          security: [{ cookieAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/BulkCreateQuotesRequest" },
+              },
+            },
+          },
+          responses: {
+            "201": {
+              description: "Importacion completada (parcial o total)",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/BulkCreateQuotesResponse" },
+                },
+              },
+            },
+            "400": {
+              description: "Body invalido (quotes no es array, vacio o supera 500)",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
+            "401": {
+              description: "Sesion requerida",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
+            "403": {
+              description: "Rol admin requerido",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
+            "500": {
+              description: "Error inesperado global",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
           },
         },
       },
