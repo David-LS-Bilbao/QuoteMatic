@@ -6,3 +6,5 @@ src/.env
 npm-debug.log*
 .codex-terminal-setup/
 .codex/
+.claude/
+.docs/
