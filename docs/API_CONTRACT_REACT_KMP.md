@@ -354,7 +354,7 @@ search demasiado corto/largo → 400
 filtro válido sin resultados → 200 + data: [] + total: 0
 ```
 
-### 6.2 Frase aleatoria
+### 6.2 Frase(s) aleatoria(s)
 
 ```http
 GET /api/quotes/random
@@ -363,18 +363,20 @@ GET /api/quotes/random
 Query params soportados:
 
 ```text
-situation
-quoteType
-contentRating
+count         — integer 1–50 (opcional). Sin count o count=1 → objeto. count>1 → array.
+situation     — slug de Situation activa
+quoteType     — slug de QuoteType activo
+contentRating — "all" | "teen" | "adult"
 ```
 
-Ejemplo:
+#### Sin `count` — comportamiento original (objeto único)
 
 ```http
+GET /api/quotes/random
 GET /api/quotes/random?situation=trabajo&quoteType=motivational
 ```
 
-Respuesta correcta:
+Respuesta `200`:
 
 ```json
 {
@@ -384,6 +386,41 @@ Respuesta correcta:
     "text": "Texto de la frase"
   }
 }
+```
+
+#### Con `count > 1` — pool aleatorio (array + meta)
+
+```http
+GET /api/quotes/random?count=10
+GET /api/quotes/random?count=5&situation=trabajo&contentRating=all
+```
+
+Respuesta `200`:
+
+```json
+{
+  "success": true,
+  "data": [
+    { "_id": "QUOTE_ID_1", "text": "..." },
+    { "_id": "QUOTE_ID_2", "text": "..." }
+  ],
+  "meta": {
+    "count": 10,
+    "returned": 10
+  }
+}
+```
+
+> Si hay menos frases disponibles que `count`, `returned` será menor que `count`.
+
+Errores:
+
+```text
+400 count must be an integer between 1 and 50
+400 Invalid contentRating. Allowed values: all, teen, adult
+404 Quote type not found
+404 Situation not found
+404 No active quotes found
 ```
 
 ### 6.3 Detalle de frase

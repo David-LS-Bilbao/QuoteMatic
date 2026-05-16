@@ -936,8 +936,20 @@ const swaggerOptions: Options = {
       "/api/quotes/random": {
         get: {
           tags: ["Quotes"],
-          summary: "Devuelve una frase aleatoria activa",
+          summary: "Devuelve una o varias frases aleatorias activas",
+          description:
+            "Sin `count` o con `count=1` devuelve un objeto único en `data` (comportamiento original). " +
+            "Con `count>1` devuelve un array en `data` junto a `meta.count` y `meta.returned`. " +
+            "Si hay menos frases disponibles que `count`, devuelve las disponibles. " +
+            "Todos los filtros son combinables.",
           parameters: [
+            {
+              name: "count",
+              in: "query",
+              required: false,
+              description: "Numero de frases aleatorias (1–50). Sin count o count=1 → objeto; count>1 → array.",
+              schema: { type: "integer", minimum: 1, maximum: 50, example: 5 },
+            },
             {
               name: "contentRating",
               in: "query",
@@ -948,12 +960,71 @@ const swaggerOptions: Options = {
               name: "quoteType",
               in: "query",
               required: false,
+              description: "Slug de QuoteType activo",
               schema: { type: "string", example: "stoic" },
+            },
+            {
+              name: "situation",
+              in: "query",
+              required: false,
+              description: "Slug de Situation activa",
+              schema: { type: "string", example: "trabajo" },
             },
           ],
           responses: {
-            "200": { description: "Frase aleatoria" },
-            "404": { description: "No hay frases activas para el filtro" },
+            "200": {
+              description: "Frase(s) aleatoria(s). Sin count → objeto; count>1 → array con meta.",
+              content: {
+                "application/json": {
+                  schema: {
+                    oneOf: [
+                      {
+                        title: "Respuesta singular (sin count o count=1)",
+                        type: "object",
+                        properties: {
+                          success: { type: "boolean", example: true },
+                          data: { $ref: "#/components/schemas/Quote" },
+                        },
+                      },
+                      {
+                        title: "Respuesta multiple (count>1)",
+                        type: "object",
+                        properties: {
+                          success: { type: "boolean", example: true },
+                          data: {
+                            type: "array",
+                            items: { $ref: "#/components/schemas/Quote" },
+                          },
+                          meta: {
+                            type: "object",
+                            properties: {
+                              count: { type: "integer", example: 10 },
+                              returned: { type: "integer", example: 10 },
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            "400": {
+              description: "count invalido (no entero, fuera de rango 1–50 o contentRating incorrecto)",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
+            "404": {
+              description: "No hay frases activas para el filtro aplicado",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ApiError" },
+                },
+              },
+            },
           },
         },
       },

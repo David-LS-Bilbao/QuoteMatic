@@ -281,97 +281,97 @@ export const getRandomQuote = async (
   res: Response
 ): Promise<void> => {
   try {
-    // La frase aleatoria tambien respeta el estado activo y filtros basicos.
-    const filter: Record<string, unknown> = {
-      isActive: true,
-    };
-const { contentRating } = req.query;
-
-if (contentRating !== undefined) {
-  if (
-    typeof contentRating !== "string" ||
-    !isValidContentRating(contentRating)
-  ) {
-    res.status(400).json({
-      success: false,
-      message: "Invalid contentRating. Allowed values: all, teen, adult",
-    });
-    return;
-  }
-
-  filter.contentRating = contentRating;
-}
-
-    // quoteType llega como slug tecnico; se resuelve a ObjectId antes de filtrar Quote.
-    if (typeof req.query.quoteType === "string") {
-      const quoteType = await QuoteType.findOne({
-        slug: req.query.quoteType,
-        isActive: true,
+    // Validate count — reutiliza el mismo helper de paginacion del controlador.
+    const countResult = parsePositiveIntegerParam(req.query.count, "count", 1, 50, 1);
+    if ("error" in countResult) {
+      res.status(400).json({
+        success: false,
+        message: "count must be an integer between 1 and 50",
       });
+      return;
+    }
+    const count = countResult.value;
 
-      if (!quoteType) {
-        res.status(404).json({
+    // La frase aleatoria tambien respeta el estado activo y filtros basicos.
+    const filter: Record<string, unknown> = { isActive: true };
+
+    const { contentRating } = req.query;
+    if (contentRating !== undefined) {
+      if (typeof contentRating !== "string" || !isValidContentRating(contentRating)) {
+        res.status(400).json({
           success: false,
-          message: "Quote type not found",
+          message: "Invalid contentRating. Allowed values: all, teen, adult",
         });
         return;
       }
+      filter.contentRating = contentRating;
+    }
 
+    // quoteType llega como slug tecnico; se resuelve a ObjectId antes de filtrar Quote.
+    if (typeof req.query.quoteType === "string") {
+      const quoteType = await QuoteType.findOne({ slug: req.query.quoteType, isActive: true });
+      if (!quoteType) {
+        res.status(404).json({ success: false, message: "Quote type not found" });
+        return;
+      }
       filter.quoteType = quoteType._id;
     }
 
     // situation llega como slug; se resuelve a ObjectId antes de filtrar Quote.
     if (typeof req.query.situation === "string") {
-      const situation = await Situation.findOne({
-        slug: req.query.situation,
-        isActive: true,
-      });
-
+      const situation = await Situation.findOne({ slug: req.query.situation, isActive: true });
       if (!situation) {
-        res.status(404).json({
-          success: false,
-          message: "Situation not found",
-        });
+        res.status(404).json({ success: false, message: "Situation not found" });
         return;
       }
-
       filter.situation = situation._id;
     }
 
-    // Primero se cuenta el total para poder elegir una posicion aleatoria valida.
-    const totalQuotes = await Quote.countDocuments(filter);
+    if (count > 1) {
+      // $sample garantiza aleatoriedad uniforme sin sesgo de distribucion.
+      const results = await Quote.aggregate([
+        { $match: filter },
+        { $sample: { size: count } },
+      ]);
 
-    if (totalQuotes === 0) {
-      res.status(404).json({
-        success: false,
-        message: "No active quotes found",
+      if (results.length === 0) {
+        res.status(404).json({ success: false, message: "No active quotes found" });
+        return;
+      }
+
+      await Quote.populate(results, quotePopulate);
+
+      res.status(200).json({
+        success: true,
+        data: results,
+        meta: {
+          count,
+          returned: results.length,
+        },
       });
-      return;
+    } else {
+      // Single quote — mantiene logica original para compatibilidad con clientes existentes.
+      const totalQuotes = await Quote.countDocuments(filter);
+
+      if (totalQuotes === 0) {
+        res.status(404).json({ success: false, message: "No active quotes found" });
+        return;
+      }
+
+      const randomSkip = Math.floor(Math.random() * totalQuotes);
+      const quote = await Quote.findOne(filter).skip(randomSkip).populate(quotePopulate);
+
+      if (!quote) {
+        res.status(404).json({ success: false, message: "No active quotes found" });
+        return;
+      }
+
+      res.status(200).json({ success: true, data: quote });
     }
-
-    const randomSkip = Math.floor(Math.random() * totalQuotes);
-
-    // skip permite saltar hasta la posicion aleatoria calculada sobre el filtro.
-    const quote = await Quote.findOne(filter)
-  .skip(randomSkip)
-  .populate(quotePopulate);
-
-if (!quote) {
-  res.status(404).json({
-    success: false,
-    message: "No active quotes found",
-  });
-  return;
-}
-
-res.status(200).json({
-  success: true,
-  data: quote,
-});
-
   } catch (error) {
     handleApiError(error, res);
-  }};
+  }
+};
 
 export const getQuoteById = async (
   req: Request,
